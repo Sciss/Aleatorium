@@ -1,0 +1,10 @@
+target/
+lib_managed/
+src_managed/
+project/boot/
+.idea/
+.idea_modules/
+*.app
+*.swp
+/.bsp/
+/kontakt.jar
