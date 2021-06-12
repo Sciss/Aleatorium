@@ -26,6 +26,7 @@ lazy val root = project.in(file("."))
       "com.pi4j"      %  "pi4j-core"            % deps.main.pi4j,       // GPIO control
       "de.sciss"      %% "fileutil"             % deps.main.fileUtil,   // utility functions
       "de.sciss"      %% "numbers"              % deps.main.numbers,    // numeric utilities
+      "de.sciss"      %% "swingplus"            % deps.main.swingPlus,  // user interface
       "net.harawata"  %  "appdirs"              % deps.main.appDirs,    // finding standard directories
       "org.rogach"    %% "scallop"              % deps.main.scallop,    // command line option parsing
     ),
@@ -39,6 +40,7 @@ lazy val deps = new {
     val numbers   = "0.2.1"
     val pi4j      = "1.4"
     val scallop   = "4.0.2"
+    val swingPlus = "0.5.0"
   }
 }
 
@@ -46,18 +48,18 @@ def appMainClass = Some("de.sciss.aleatorium.PiRun")
 
 lazy val assemblySettings = Seq(
   // ---- assembly ----
-  test            in assembly := {},
-  mainClass       in assembly := appMainClass,
-  target          in assembly := baseDirectory.value,
-  assemblyJarName in assembly := s"$baseNameL.jar",
-  assemblyMergeStrategy in assembly := {
+  assembly / test            := {},
+  assembly / mainClass       := appMainClass,
+  assembly / target          := baseDirectory.value,
+  assembly / assemblyJarName := s"$baseNameL.jar",
+  assembly / assemblyMergeStrategy := {
     case "logback.xml" => MergeStrategy.last
     case PathList("org", "xmlpull", _ @ _*)              => MergeStrategy.first
     case PathList("org", "w3c", "dom", "events", _ @ _*) => MergeStrategy.first // bloody Apache Batik
     case PathList(ps @ _*) if ps.last endsWith "module-info.class" => MergeStrategy.first // bloody Jackson
     case x =>
-      val old = (assemblyMergeStrategy in assembly).value
+      val old = (assembly / assemblyMergeStrategy).value
       old(x)
   },
-  fullClasspath in assembly := (fullClasspath in Test).value // https://github.com/sbt/sbt-assembly/issues/27
+  assembly / fullClasspath := (Test / fullClasspath).value // https://github.com/sbt/sbt-assembly/issues/27
 )
