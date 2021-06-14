@@ -105,17 +105,18 @@ object FootSwitchTest {
     println("FootSwitch test")
 
     val gpio      = GpioFactory.getInstance
+    println(s"provisionDigitalInputPin(${config.pin}, ${config.pull})")
     val button    = gpio.provisionDigitalInputPin(config.pin, config.pull)
 
     //    but.setShutdownOptions(true)
 
     button.addListener(new GpioPinListenerDigital() {
-      private var t0 = 0L
-      private var t1 = 0L
-      private var t2 = 0L
+//      private var t0 = 0L
+//      private var t1 = 0L
+//      private var t2 = 0L
 
       override def handleGpioPinDigitalStateChangeEvent(event: GpioPinDigitalStateChangeEvent): Unit = {
-        if (config.log) println(s"red button: ${event.getState}")
+        if (config.log) println(s"button: ${event.getState}")
         val state = if (event.getState.isHigh) "HIGH" else "LOW"
         println(s"Detected $state.")
       }
