@@ -107,8 +107,9 @@ object FootSwitchTest {
     val gpio      = GpioFactory.getInstance
     println(s"provisionDigitalInputPin(${config.pin}, ${config.pull})")
     val button    = gpio.provisionDigitalInputPin(config.pin, config.pull)
+    button.setPullResistance(config.pull)
 
-    println(s"Initial state: ${button.getState}")
+    println(s"Initial state: ${button.getState} ; resistance ${button.getPullResistance}")
 
     //    but.setShutdownOptions(true)
 
