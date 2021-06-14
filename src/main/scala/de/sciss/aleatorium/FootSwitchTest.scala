@@ -116,14 +116,8 @@ object FootSwitchTest {
 
       override def handleGpioPinDigitalStateChangeEvent(event: GpioPinDigitalStateChangeEvent): Unit = {
         if (config.log) println(s"red button: ${event.getState}")
-        if (event.getState.isHigh) {
-          t0 = t1
-          t1 = t2
-          t2 = System.currentTimeMillis()
-          //          if ((t2 - t0) < 3000) {
-          println("Detected switch.")
-          //          }
-        }
+        val state = if (event.getState.isHigh) "HIGH" else "LOW"
+        println(s"Detected $state.")
       }
     })
 
