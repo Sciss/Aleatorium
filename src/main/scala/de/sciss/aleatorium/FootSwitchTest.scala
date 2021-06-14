@@ -108,6 +108,8 @@ object FootSwitchTest {
     println(s"provisionDigitalInputPin(${config.pin}, ${config.pull})")
     val button    = gpio.provisionDigitalInputPin(config.pin, config.pull)
 
+    println(s"Initial state: ${button.getState}")
+
     //    but.setShutdownOptions(true)
 
     button.addListener(new GpioPinListenerDigital() {
