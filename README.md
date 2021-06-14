@@ -14,9 +14,23 @@ To contact the author, send an e-mail to `contact at sciss.de`.
 Builds with sbt against Scala 2.13.
 Create executable: `sbt assembly`
 
+## fix wiring-pi
+
+__Important:__ Wiring-Pi is broken on the Pi 4. The pull up/down resistors cannot be configured.
+See https://pi4j.com/1.3/install.html#WiringPi_Native_Library -- one needs to replace the installed versions
+with an unofficial one!
+
+    sudo apt remove wiringpi -y
+    sudo apt install git-core gcc make
+    cd ~/Documents/devel/
+    git clone https://github.com/WiringPi/WiringPi --branch master --single-branch wiringpi
+    cd wiringpi
+    sudo ./build
+
 ## run on the Raspberry Pi
+
+To run
 
     java -Xmx768m -jar aleatorium.jar
 
 ## test runs
-

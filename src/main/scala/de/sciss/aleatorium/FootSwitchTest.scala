@@ -21,14 +21,15 @@ import java.util.Locale
 
 /*
   wire 1 : GND
-  wire 2 : GPIO 1 (BCM GPIO 18)
+  wire 2 : GPIO 5
 
  */
 object FootSwitchTest {
   case class Config(
-                     pin : Pin = RaspiPin.GPIO_01,
-                     pull: PinPullResistance = PinPullResistance.PULL_UP,
-                     log : Boolean = false,
+                     pin      : Pin               = RaspiPin.GPIO_05,
+                     pull     : PinPullResistance = PinPullResistance.PULL_UP,
+                     debounce : Int               = 20,
+                     log      : Boolean           = false,
                    )
 
   def main(args: Array[String]): Unit = {
@@ -43,10 +44,12 @@ object FootSwitchTest {
       val pull: Opt[String] = opt("pull", default = Some(default.pull.toString),
         descr = s"Resistor pull mode, one of 'UP', 'DOWN, 'OFF' (default ${default.pull})"
       )
-      val log: Opt[Boolean] = toggle(default = Some(false),
+      val log: Opt[Boolean] = toggle(default = Some(default.log),
         descrYes = "Print logging"
       )
-
+      val debounce: Opt[Int] = opt(default = Some(default.debounce),
+        descr = s"Debounce period in milliseconds. Zero to turn off (default: ${default.debounce})"
+      )
       verify()
 
       private def parsePin(i: Int, default: Pin): Pin = i match {
@@ -92,9 +95,10 @@ object FootSwitchTest {
       }
 
       val config: Config = Config(
-        pin     = parsePin(pin(), default.pin),
-        pull    = parsePull(pull()),
-        log     = log(),
+        pin       = parsePin(pin(), default.pin),
+        pull      = parsePull(pull()),
+        debounce  = debounce(),
+        log       = log(),
       )
     }
 
@@ -107,7 +111,8 @@ object FootSwitchTest {
     val gpio      = GpioFactory.getInstance
     println(s"provisionDigitalInputPin(${config.pin}, ${config.pull})")
     val button    = gpio.provisionDigitalInputPin(config.pin, config.pull)
-    button.setPullResistance(config.pull)
+//    button.setPullResistance(config.pull)
+    if (config.debounce > 0) button.setDebounce(config.debounce)
 
     println(s"Initial state: ${button.getState} ; resistance ${button.getPullResistance}")
 
