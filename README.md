@@ -29,6 +29,9 @@ with an unofficial one!
 
 ## run on the Raspberry Pi
 
+- THIS NO LONGER works: the JNI library `librpiws28114j.so` must be installed.
+- the JNI library `libws281x.so` must be installed. Copy it to `/usr/lib/jni/`
+
 To run
 
     java -Xmx768m -jar aleatorium.jar

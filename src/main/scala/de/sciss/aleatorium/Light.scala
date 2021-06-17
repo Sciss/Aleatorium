@@ -13,7 +13,7 @@
 
 package de.sciss.aleatorium
 
-import de.cacodaemon.rpiws28114j.{StripType, WS2811, WS2811Channel}
+import com.github.mbelling.ws281x.{Color, LedStripType, Ws281xLedStrip}
 import org.rogach.scallop.{ScallopConf, ScallopOption => Opt}
 
 trait Light {
@@ -69,7 +69,8 @@ object Light {
 
   case class Config(
                      gpio       : Int       = 18,
-                     stripType  : StripType = StripType.WS2811_STRIP_GRB,
+//                     stripType  : StripType = StripType.WS2811_STRIP_GRB,
+                     stripType  : LedStripType = LedStripType.WS2811_STRIP_GRB,
                      invert     : Boolean   = false,
                      brightness : Int       = 0xFF,
                      verbose    : Boolean   = false,
@@ -78,25 +79,43 @@ object Light {
                    )
 
   private final class Impl(config: Config) extends Light {
-    private[this] val ok: Boolean = try {
+//    private[this] val okBLA: Boolean = try {
+//      if (config.verbose) {
+//        println(s"WS2811Channel(/* GPIO = */ ${config.gpio}, /* LED count = */ 1, ${config.stripType}, /* invert = */ ${config.invert}, /* brightness = */ ${config.brightness})")
+//      }
+//      WS2811.init(new WS2811Channel(/* GPIO */ config.gpio, /* LED count */ 1,
+//        config.stripType, /* invert */ config.invert, /* brightness */ config.brightness))
+//      println("Light initialized.")
+//      true
+//    } catch {
+//      case e: Exception =>
+//        println("!! Failed to initialize WS2811:")
+//        e.printStackTrace()
+//        false
+//    }
+
+    private[this] val strip = try {
       if (config.verbose) {
         println(s"WS2811Channel(/* GPIO = */ ${config.gpio}, /* LED count = */ 1, ${config.stripType}, /* invert = */ ${config.invert}, /* brightness = */ ${config.brightness})")
       }
-      WS2811.init(new WS2811Channel(/* GPIO */ config.gpio, /* LED count */ 1,
-        config.stripType, /* invert */ config.invert, /* brightness */ config.brightness))
+      val res = new Ws281xLedStrip(1 /*ledsCount*/, config.gpio /*gpioPin*/, 800000 /*frequencyHz*/,
+        10 /*dma*/, config.brightness /*brightness*/, 0 /*pwmChannel*/, config.invert /*invert*/,
+        config.stripType /*stripType*/, true /*clearOnExit*/)
       println("Light initialized.")
-      true
+      res
     } catch {
       case e: Exception =>
         println("!! Failed to initialize WS2811:")
         e.printStackTrace()
-        false
+        null
     }
 
     def setRGB(value: Int): Unit =
-      if (ok) try {
-        WS2811.setPixel(0, value)
-        WS2811.render()
+      if (strip != null) try {
+//        WS2811.setPixel(0, value)
+//        WS2811.render()
+        strip.setPixel(0, new Color(value))
+        strip.render()
       } catch {
         case _: Exception =>
           println("!! Failed to set RGB.")
