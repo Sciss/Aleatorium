@@ -30,6 +30,15 @@ object Alpha {
 //    gripOpen =  74,
 //  )
 
+  object Park extends ArmPos(
+    base     =  90,
+    lowArm   = 118, //
+    highArm  =  10,
+    ankle    =  34,
+    gripRota = 170,
+    gripOpen =  74,
+  )
+
   object Raise1 extends ArmPos(
     base     =  90,
     lowArm   = 119, //
@@ -174,14 +183,14 @@ object Alpha {
     gripOpen =  74,
   )
 
-  object Park extends ArmPos(
-    base     =  90,
-    lowArm   = 118, //
-    highArm  =  10,
-    ankle    =  34,
-    gripRota = 170,
-    gripOpen =  74,
-  )
+//  object Park extends ArmPos(
+//    base     =  90,
+//    lowArm   = 118, //
+//    highArm  =  10,
+//    ankle    =  34,
+//    gripRota = 170,
+//    gripOpen =  74,
+//  )
 
   case class Config(
                      initDelay  : Int     = 120,
@@ -235,7 +244,7 @@ object Alpha {
 
   def run(c: Config): Unit = {
     println(Alpha.nameAndVersion)
-    ServoUI.run(ServoUI.Config(), ArmModel(Park))
+    ServoUI.run(ServoUI.Config(dryRun = true), ArmModel(Park))
   }
 
   def shutdown(): Unit = {

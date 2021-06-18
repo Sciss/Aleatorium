@@ -21,7 +21,7 @@ import pi4j.component.servo.impl.PCA9685GpioServoProvider
 import pi4j.gpio.extension.pca.{PCA9685GpioProvider, PCA9685Pin}
 
 import scala.swing.event.ValueChanged
-import scala.swing.{BoxPanel, Button, Frame, Label, Orientation, Slider, Swing, TextField}
+import scala.swing.{BoxPanel, Button, Dimension, FlowPanel, Frame, Label, Orientation, Slider, Swing, TextField}
 
 object ServoUI {
   case class Config(
@@ -29,6 +29,7 @@ object ServoUI {
                      pwmMin   : Int             = 560,
                      pwmMax   : Int             = 2500,
                      freq     : Double          = 50.0,
+                     dryRun   : Boolean         = false,
                    )
 
   def main(args: Array[String]): Unit = {
@@ -90,6 +91,29 @@ object ServoUI {
     def calculatePwmDuration(angle: Double, lo: Int = 0, hi: Int = 180): Int =
       (angle.clip(lo, hi).linLin(lo, hi, config.pwmMin, config.pwmMax) + 0.5).toInt
 
+
+    val txLine = new TextField(4)
+    txLine.editable = false
+
+    val slLine = new Slider
+    slLine.min    = 100
+    slLine.max    = 5000
+    slLine.value  = 2000
+    slLine.paintLabels = true
+    slLine.preferredSize = new Dimension(500, 24)
+
+    def updateTxLine(): Unit =
+      txLine.text = slLine.value.toString
+
+    slLine.reactions += {
+      case ValueChanged(_) =>
+        updateTxLine()
+    }
+
+    val pLine = new FlowPanel(
+      new Label("Line Duration:"), slLine, txLine
+    )
+
     val sliders = pins.zipWithIndex.zip(model.variables).map { case ((pin, idx), vr) =>
       val servoDriver = servoProvider.getServoDriver(pin)
       val txSl = new TextField(4)
@@ -120,7 +144,7 @@ object ServoUI {
       vr.addListener {
         case value =>
           val micros = calculatePwmDuration(value)
-          servoDriver.setServoPulseWidth(micros)
+          if (!config.dryRun) servoDriver.setServoPulseWidth(micros)
           Swing.onEDT {
             updateTextModel()
           }
@@ -131,6 +155,9 @@ object ServoUI {
 //        servoDriver.setServoPulseWidth(micros)
         vr() = sl.value
       }
+      val bLine = Button("Line") {
+        vr.lineTo(sl.value, slLine.value)
+      }
       val bOff = Button("Off") {
 //        servoDriver.setServoPulseWidth(0)
         servoDriver.getProvider.setAlwaysOff(pin)
@@ -140,11 +167,14 @@ object ServoUI {
       bp.contents += sl
       bp.contents += txSl
       bp.contents += bSet
+      bp.contents += bLine
+      bp.contents += txModel
       bp.contents += bOff
       bp
     }
 
     val p = new BoxPanel(Orientation.Vertical)
+    p.contents += pLine
     p.contents ++= sliders
 
     new Frame {

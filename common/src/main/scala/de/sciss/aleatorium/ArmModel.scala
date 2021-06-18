@@ -14,19 +14,46 @@
 package de.sciss.aleatorium
 
 import de.sciss.model.impl.ModelImpl
+import de.sciss.numbers.Implicits.doubleNumberWrapper
+
+import java.util.{Timer, TimerTask}
 
 object ArmModel {
   def apply(init: ArmPos): ArmModel = new Impl(init)
 
-  private final class VarImpl(init: Int) extends Var[Int] with ModelImpl[Int] {
-    private val sync = new AnyRef
-
-    private var _value = init
+  private final class VarImpl(impl: Impl, init: Int, sync: AnyRef) extends Var[Int] with ModelImpl[Int] {
+    private var _value        = init
+    private var _startValue   = init
+    private var _targetValue  = init
+    private var _targetDur    = 0       // milliseconds
+    private var _lineStart    = 0L      // absolute time
 
     override def apply(): Int = sync.synchronized(_value)
 
-    override def update(value: Int): Unit = {
+    private def stopLine(): Unit = {
+      if (impl.removeAnim(this)) {
+//        _targetValue = _value
+      }
+    }
+
+    def animStep(): Unit = {
+      val now = System.currentTimeMillis()
+      val dt  = now - _lineStart
+      if (dt >= _targetDur) {
+        updateImpl(value = _targetValue, stop = true)
+      } else {
+        assert (dt >= 0)
+        val v = (dt.toDouble.linLin(0, _targetDur, _startValue, _targetValue) + 0.5).toInt
+        updateImpl(value = v, stop = false)
+      }
+    }
+
+    override def update(value: Int): Unit =
+      updateImpl(value = value, stop = true)
+
+    private def updateImpl(value: Int, stop: Boolean): Unit = {
       val change = sync.synchronized {
+        if (stop) stopLine()
         (_value != value) && {
           _value = value
           true
@@ -34,15 +61,75 @@ object ArmModel {
       }
       if (change) dispatch(_value)
     }
+
+    override def lineTo(value: Int, duration: Int): Unit = {
+      require (duration > 0)
+      sync.synchronized {
+        stopLine()
+        if (_value != value) {
+          _lineStart    = System.currentTimeMillis()
+          _startValue   = _value
+          _targetValue  = value
+          _targetDur    = duration
+          impl.addAnim(this)
+        }
+      }
+    }
   }
 
   private final class Impl(pos0: ArmPos) extends ArmModel {
-    override val base     : Var[Int] = new VarImpl(pos0.base    )
-    override val lowArm   : Var[Int] = new VarImpl(pos0.lowArm  )
-    override val highArm  : Var[Int] = new VarImpl(pos0.highArm )
-    override val ankle    : Var[Int] = new VarImpl(pos0.ankle   )
-    override val gripRota : Var[Int] = new VarImpl(pos0.gripRota)
-    override val gripOpen : Var[Int] = new VarImpl(pos0.gripOpen)
+    private val timer = new Timer("arm", true)
+
+    private val sync = new AnyRef
+
+    private val _base     = new VarImpl(this, pos0.base    , sync)
+    private val _lowArm   = new VarImpl(this, pos0.lowArm  , sync)
+    private val _highArm  = new VarImpl(this, pos0.highArm , sync)
+    private val _ankle    = new VarImpl(this, pos0.ankle   , sync)
+    private val _gripRota = new VarImpl(this, pos0.gripRota, sync)
+    private val _gripOpen = new VarImpl(this, pos0.gripOpen, sync)
+
+    override def base     : Var[Int] = _base
+    override def lowArm   : Var[Int] = _lowArm
+    override def highArm  : Var[Int] = _highArm
+    override def ankle    : Var[Int] = _ankle
+    override def gripRota : Var[Int] = _gripRota
+    override def gripOpen : Var[Int] = _gripOpen
+
+    private var setAnim = Set.empty[VarImpl]
+    private var _tt: TimerTask = null
+
+    private def animStep(): Unit = sync.synchronized {
+      setAnim.foreach { vr =>
+        vr.animStep()
+      }
+    }
+
+    def addAnim(vr: VarImpl): Unit = sync.synchronized {
+      val start = setAnim.isEmpty
+      setAnim += vr
+      if (start) {
+        assert (_tt == null)
+        val tt = new TimerTask {
+          override def run(): Unit = animStep()
+        }
+        _tt = tt
+        timer.scheduleAtFixedRate(tt, 20L, 20L)
+      }
+    }
+
+    def removeAnim(vr: VarImpl): Boolean = sync.synchronized {
+      val res = setAnim.contains(vr)
+      if (res) {
+        setAnim -= vr
+        if (setAnim.isEmpty) {
+          assert (_tt != null)
+          _tt.cancel()
+          _tt = null
+        }
+      }
+      res
+    }
 
     def variables: Seq[Var[Int]] = Seq(
       base,

@@ -20,5 +20,5 @@ trait Var[A] extends Model[A] {
 
   def update(value: A): Unit
 
-//  def lineTo(value: A, duration: Int): Unit
+  def lineTo(value: A, duration: Int): Unit
 }
