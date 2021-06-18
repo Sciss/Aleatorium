@@ -128,7 +128,7 @@ object Beta {
     gripOpen =  64,
   )
 
-  val Gesture: Seq[KeyFrame] = Seq(
+  val GestureNo: Seq[KeyFrame] = Seq(
     KeyFrame("Park"   , Park    ),
     KeyFrame("Awake"  , Awake   ),
     KeyFrame("Orient1" , Orient1  ),
@@ -136,6 +136,20 @@ object Beta {
     KeyFrame("No1" , No1, dur =  500  ),
     KeyFrame("No2" , No2, dur = 1000  ),
     KeyFrame("No3" , No3, dur =  500  ),
+    KeyFrame("Return1"  , Return1   ),
+    KeyFrame("Return2"  , Return2   ),
+    KeyFrame("Return3"  , Return3   ),
+  )
+
+  val GestureYes: Seq[KeyFrame] = Seq(
+    KeyFrame("Park"   , Park    ),
+    KeyFrame("Awake"  , Awake   ),
+    KeyFrame("Orient1" , Orient1  ),
+    KeyFrame("Orient2" , Orient2 ),
+    KeyFrame("Yes1" , Yes1, dur =  500  ),
+    KeyFrame("Yes2" , Yes2, dur = 1000  ),
+    KeyFrame("Yes3" , Yes3, dur =  500  ),
+    KeyFrame("Yes4" , Yes4, dur =  500  ),
     KeyFrame("Return1"  , Return1   ),
     KeyFrame("Return2"  , Return2   ),
     KeyFrame("Return3"  , Return3   ),
@@ -204,7 +218,7 @@ object Beta {
     println(Beta.nameAndVersion)
     val sCfg = ServoUI.Config(
       /*dryRun = true*/
-      presets     = Gesture,
+      presets     = GestureYes,
       offAfterSeq = true,
     )
     val runSeq    = Var(false)
