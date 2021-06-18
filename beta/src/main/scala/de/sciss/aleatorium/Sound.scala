@@ -34,10 +34,10 @@ object Sound {
         descr   = s"Sound file path (default: ${default.path}).",
         validate = x => new File(x).isFile,
       )
-      val verbose: Opt[Boolean] = opt("verbose", short = 'V', default = Some(config.verbose),
+      val verbose: Opt[Boolean] = opt("verbose", short = 'V', default = Some(default.verbose),
         descr = "Verbose printing."
       )
-      val dumpOSC: Opt[Boolean] = opt("dump-osc", default = Some(config.dumpOSC),
+      val dumpOSC: Opt[Boolean] = opt("dump-osc", default = Some(default.dumpOSC),
         descr = "Enable SuperCollider OSC printing."
       )
 
