@@ -1,6 +1,7 @@
 package de.sciss.aleatorium
 
 import de.sciss.numbers.Implicits._
+import de.sciss.osc
 import de.sciss.synth.{Buffer, Server, ServerConnection, Synth, SynthDef}
 import de.sciss.synth.Ops._
 import de.sciss.synth.ugen
@@ -49,8 +50,10 @@ object Sound {
 
   def run(c: Config): Unit = {
     val sCfg = Server.Config()
+    sCfg.transport          = osc.TCP
     sCfg.inputBusChannels   = 1
     sCfg.outputBusChannels  = 1
+    sCfg.pickPort()
     Server.boot(config = sCfg) {
       case ServerConnection.Running(s) =>
         booted(c, s)
