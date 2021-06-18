@@ -106,14 +106,18 @@ object ServoUI {
           updateText()
       }
       updateText()
-      val b = Button("Set") {
+      val bSet = Button("Set") {
         val micros = calculatePwmDuration(sl.value)
         servoDriver.setServoPulseWidth(micros)
+      }
+      val bOff = Button("Off") {
+        servoDriver.setServoPulseWidth(0)
       }
       val bp = new BoxPanel(Orientation.Horizontal)
       bp.contents += sl
       bp.contents += tx
-      bp.contents += b
+      bp.contents += bSet
+      bp.contents += bOff
       bp
     }
 
