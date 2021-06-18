@@ -26,12 +26,13 @@ import scala.swing.{BoxPanel, Button, Dimension, FlowPanel, Frame, Label, Orient
 
 object ServoUI {
   case class Config(
-                     i2cBus   : Int             = 1,
-                     pwmMin   : Int             = 560,
-                     pwmMax   : Int             = 2500,
-                     freq     : Double          = 50.0,
-                     dryRun   : Boolean         = false,
-                     presets  : Seq[NamedPos]     = Seq.empty,
+                     i2cBus     : Int             = 1,
+                     pwmMin     : Int             = 560,
+                     pwmMax     : Int             = 2500,
+                     freq       : Double          = 50.0,
+                     dryRun     : Boolean         = false,
+                     presets    : Seq[NamedPos]   = Seq.empty,
+                     offAfterSeq: Boolean         = false,
                    )
 
   def main(args: Array[String]): Unit = {
@@ -242,6 +243,13 @@ object ServoUI {
         stepRunSeq()
       } else {
         stopSeq()
+        if (config.offAfterSeq) {
+          Thread.sleep(500)
+          pins.foreach { pin =>
+            val servoDriver = servoProvider.getServoDriver(pin)
+            servoDriver.getProvider.setAlwaysOff(pin)
+          }
+        }
       }
     }
 

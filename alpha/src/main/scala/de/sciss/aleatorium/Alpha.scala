@@ -276,7 +276,8 @@ object Alpha {
     println(Alpha.nameAndVersion)
     val sCfg = ServoUI.Config(
       /*dryRun = true*/
-      presets = Gesture
+      presets     = Gesture,
+      offAfterSeq = true,
     )
     val runSeq    = Var(false)
     val butState  = Var(true)
