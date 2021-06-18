@@ -96,11 +96,6 @@ object ServoUI {
 //    var seqRunning  = false
     var seqRunIdx   = 0
 
-    runSeq.addListener {
-      case false =>
-        model.name() = "Stopped"
-    }
-
     def stopSeq(): Unit = {
       //      if (seqRunning) {
       //        seqRunning    = false
@@ -268,10 +263,17 @@ object ServoUI {
             model.name() = "Not in initial!"
           } else {
             runSeq()    = true
-            seqRunIdx   = 0
-            stepRunSeq()
           }
         }
+    }
+
+    runSeq.addListener {
+      case true =>
+        seqRunIdx = 0
+        stepRunSeq()
+
+      case false =>
+        model.name() = "Stopped"
     }
 
     new Frame {
