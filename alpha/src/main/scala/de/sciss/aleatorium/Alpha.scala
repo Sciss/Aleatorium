@@ -21,6 +21,168 @@ import java.util.{Date, Locale}
 import scala.util.control.NonFatal
 
 object Alpha {
+//  case object ParkOLD extends ArmPos(
+//    base     =  90,
+//    lowArm   = 124,
+//    highArm  =  20,
+//    ankle    =  35,
+//    gripRota = 170,
+//    gripOpen =  74,
+//  )
+
+  object Raise1 extends ArmPos(
+    base     =  90,
+    lowArm   = 119, //
+    highArm  =  20, //
+    ankle    =  30, //
+    gripRota = 170,
+    gripOpen =  79, //
+  )
+
+  object Raise2 extends ArmPos(
+    base     =  90,
+    lowArm   = 119,
+    highArm  =  34, //
+    ankle    =  20, //
+    gripRota = 170,
+    gripOpen = 100, //
+  )
+
+  object Reach1 extends ArmPos(
+    base     =  90,
+    lowArm   = 130, //
+    highArm  =  51, //
+    ankle    =  15, //
+    gripRota = 170,
+    gripOpen = 105, //
+  )
+
+  object Reach2 extends ArmPos(
+    base     =  90,
+    lowArm   = 138, //
+    highArm  =  59, //
+    ankle    =  15,
+    gripRota = 170,
+    gripOpen = 110,
+  )
+
+  object Reach3 extends ArmPos(
+    base     =  90,
+    lowArm   = 146, //
+    highArm  =  71, //
+    ankle    =  10, //
+    gripRota = 170,
+    gripOpen = 110,
+  )
+
+  object Grab1 extends ArmPos(
+    base     =  90,
+    lowArm   = 150, //
+    highArm  =  71,
+    ankle    =  10,
+    gripRota = 170,
+    gripOpen =  90, //
+  )
+
+  object Grab2 extends ArmPos(
+    base     =  90,
+    lowArm   = 150,
+    highArm  =  71,
+    ankle    =  10,
+    gripRota = 170,
+    gripOpen =  74, //
+  )
+
+  object Lift1 extends ArmPos(
+    base     =  90,
+    lowArm   = 137, //
+    highArm  =  71,
+    ankle    =  10,
+    gripRota = 170,
+    gripOpen =  74,
+  )
+
+  object Lift2 extends ArmPos(
+    base     =  90,
+    lowArm   = 120, //
+    highArm  =  80, //
+    ankle    =  30, //
+    gripRota = 170,
+    gripOpen =  74,
+  )
+
+  object Swerve1 extends ArmPos(
+    base     = 134, //
+    lowArm   = 112, //
+    highArm  =  80,
+    ankle    =  30,
+    gripRota = 170,
+    gripOpen =  74,
+  )
+
+  object Swerve2 extends ArmPos(
+    base     = 170, //
+    lowArm   = 112,
+    highArm  =  80, //
+    ankle    =  30,
+    gripRota = 135, //
+    gripOpen =  74,
+  )
+
+  object Drop extends ArmPos(
+    base     = 170,
+    lowArm   = 112,
+    highArm  =  80,
+    ankle    =  30,
+    gripRota = 135,
+    gripOpen = 110,
+  )
+
+  object Return1 extends ArmPos(
+    base     =  90, //
+    lowArm   = 112,
+    highArm  =  80,
+    ankle    =  30,
+    gripRota = 170, //
+    gripOpen = 110,
+  )
+
+  object Return2 extends ArmPos(
+    base     =  90,
+    lowArm   = 124, //
+    highArm  =  20, //
+    ankle    =  35, //
+    gripRota = 170,
+    gripOpen =  74, //
+  )
+
+  object Return3 extends ArmPos(
+    base     =  90,
+    lowArm   = 110, //
+    highArm  =  10, //
+    ankle    =  26, //
+    gripRota = 170, //
+    gripOpen =  74, //
+  )
+
+  object Return4 extends ArmPos(
+    base     =  90,
+    lowArm   = 116, //
+    highArm  =  10,
+    ankle    =  34, //
+    gripRota = 170,
+    gripOpen =  74,
+  )
+
+  object Park extends ArmPos(
+    base     =  90,
+    lowArm   = 118, //
+    highArm  =  10,
+    ankle    =  34,
+    gripRota = 170,
+    gripOpen =  74,
+  )
+
   case class Config(
                      initDelay  : Int     = 120,
                      verbose    : Boolean = false,
@@ -73,6 +235,7 @@ object Alpha {
 
   def run(c: Config): Unit = {
     println(Alpha.nameAndVersion)
+    ServoUI.run(ServoUI.Config(), ArmModel(Park))
   }
 
   def shutdown(): Unit = {

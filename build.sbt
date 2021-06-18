@@ -37,6 +37,7 @@ lazy val common = project.in(file("common"))
     libraryDependencies ++= Seq(
       "com.pi4j"      %  "pi4j-core"            % deps.common.pi4j,       // GPIO control
       "de.sciss"      %% "fileutil"             % deps.common.fileUtil,   // utility functions
+      "de.sciss"      %% "model"                % deps.common.model,      // events
       "de.sciss"      %% "numbers"              % deps.common.numbers,    // numeric utilities
       "de.sciss"      %% "swingplus"            % deps.common.swingPlus,  // user interface
       "net.harawata"  %  "appdirs"              % deps.common.appDirs,    // finding standard directories
@@ -74,6 +75,7 @@ lazy val deps = new {
   val common = new {
     val appDirs   = "1.2.1"
     val fileUtil  = "1.1.5"
+    val model     = "0.3.5"
     val numbers   = "0.2.1"
     val pi4j      = "1.4"
     val scallop   = "4.0.2"

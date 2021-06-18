@@ -11,8 +11,8 @@ To contact the author, send an e-mail to `contact at sciss.de`.
 
 ## building
 
-Builds with sbt against Scala 2.13.
-Create executable: `sbt assembly`
+Builds with sbt against Scala 2.13. There are two sub-modules `alpha` (top robot) and `beta` (bottom robot). 
+Create executable: `sbt alpha/assembly` or `sbt beta/assembly`.
 
 ## fix wiring-pi
 
@@ -45,4 +45,3 @@ The JNI library is build via https://github.com/Sciss/rpi-ws281x-java/tree/pi4
 TODO: `Can't open /dev/mem: Permission denied`. Currently must use `sudo` for:
 
     java -cp aleatorium.jar:lib/rpi-ws281x-java-2.0.0-SNAPSHOT.jar de.sciss.aleatorium.Light
-

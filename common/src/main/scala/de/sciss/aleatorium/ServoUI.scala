@@ -21,7 +21,7 @@ import pi4j.component.servo.impl.PCA9685GpioServoProvider
 import pi4j.gpio.extension.pca.{PCA9685GpioProvider, PCA9685Pin}
 
 import scala.swing.event.ValueChanged
-import scala.swing.{BoxPanel, Button, Frame, Orientation, Slider, Swing, TextField}
+import scala.swing.{BoxPanel, Button, Frame, Label, Orientation, Slider, Swing, TextField}
 
 object ServoUI {
   case class Config(
@@ -66,11 +66,11 @@ object ServoUI {
     }
 
     Swing.onEDT {
-      run(p.config)
+      run(p.config, ArmModel(ArmPos.Unknown))
     }
   }
 
-  def run(config: Config): Unit = {
+  def run(config: Config, model: ArmModel): Unit = {
     val gpioProvider = createProvider(i2cBus = config.i2cBus, freq = config.freq)
     val gpio = GpioFactory.getInstance
     val pins = Seq(
@@ -90,33 +90,55 @@ object ServoUI {
     def calculatePwmDuration(angle: Double, lo: Int = 0, hi: Int = 180): Int =
       (angle.clip(lo, hi).linLin(lo, hi, config.pwmMin, config.pwmMax) + 0.5).toInt
 
-    val sliders = pins.map { pin =>
+    val sliders = pins.zipWithIndex.zip(model.variables).map { case ((pin, idx), vr) =>
       val servoDriver = servoProvider.getServoDriver(pin)
-      val tx = new TextField(4)
-      tx.editable = false
+      val txSl = new TextField(4)
+      txSl.editable = false
+      val txModel = new TextField(4)
+      txModel.editable = false
       val sl = new Slider
-      sl.min = 0
-      sl.max = 180
+      sl.min    = 0
+      sl.max    = 180
+      sl.value  = vr()
       sl.paintLabels = true
-      def updateText(): Unit = {
-        tx.text = sl.value.toString
+
+      def updateTextSl(): Unit = {
+        txSl.text = sl.value.toString
       }
+      def updateTextModel(): Unit = {
+        txModel.text = vr().toString
+      }
+
       sl.reactions += {
         case ValueChanged(_) =>
-          updateText()
+          updateTextSl()
       }
-      updateText()
+
+      updateTextSl()
+      updateTextModel()
+
+      vr.addListener {
+        case value =>
+          val micros = calculatePwmDuration(value)
+          servoDriver.setServoPulseWidth(micros)
+          Swing.onEDT {
+            updateTextModel()
+          }
+      }
+
       val bSet = Button("Set") {
-        val micros = calculatePwmDuration(sl.value)
-        servoDriver.setServoPulseWidth(micros)
+//        val micros = calculatePwmDuration(sl.value)
+//        servoDriver.setServoPulseWidth(micros)
+        vr() = sl.value
       }
       val bOff = Button("Off") {
 //        servoDriver.setServoPulseWidth(0)
         servoDriver.getProvider.setAlwaysOff(pin)
       }
       val bp = new BoxPanel(Orientation.Horizontal)
+      bp.contents += new Label((idx + 1).toString)
       bp.contents += sl
-      bp.contents += tx
+      bp.contents += txSl
       bp.contents += bSet
       bp.contents += bOff
       bp
