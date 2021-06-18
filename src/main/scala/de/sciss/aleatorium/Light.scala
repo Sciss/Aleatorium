@@ -21,6 +21,17 @@ trait Light {
 }
 
 object Light {
+  case class Config(
+                     gpio       : Int       = 18,
+                     //                     stripType  : StripType = StripType.WS2811_STRIP_GRB,
+                     stripType  : LedStripType = LedStripType.WS2811_STRIP_GRB,
+                     invert     : Boolean   = false,
+                     brightness : Int       = 0xFF,
+                     verbose    : Boolean   = false,
+                     flashDur   : Int       = 100,
+                     flashRGB   : Int       = 0xFFFFFF,
+                   )
+
   def apply(config: Config): Light = new Impl(config)
 
   def main(args: Array[String]): Unit = {
@@ -66,17 +77,6 @@ object Light {
     Thread.sleep(config.flashDur)
     light.setRGB(0)
   }
-
-  case class Config(
-                     gpio       : Int       = 18,
-//                     stripType  : StripType = StripType.WS2811_STRIP_GRB,
-                     stripType  : LedStripType = LedStripType.WS2811_STRIP_GRB,
-                     invert     : Boolean   = false,
-                     brightness : Int       = 0xFF,
-                     verbose    : Boolean   = false,
-                     flashDur   : Int       = 50,
-                     flashRGB   : Int       = 0xFFFFFF,
-                   )
 
   private final class Impl(config: Config) extends Light {
 //    private[this] val okBLA: Boolean = try {
