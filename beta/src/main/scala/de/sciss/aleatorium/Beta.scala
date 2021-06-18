@@ -111,7 +111,7 @@ object Beta {
   // fast
   object Yes3 extends ArmPos(
     base     =  93,
-    lowArm   = 102, //
+    lowArm   = 105, //
     highArm  =  64,
     ankle    =  13,
     gripRota = 175,
