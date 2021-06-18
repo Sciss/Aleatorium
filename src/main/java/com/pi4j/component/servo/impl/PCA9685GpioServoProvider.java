@@ -29,17 +29,16 @@ package com.pi4j.component.servo.impl;
  * #L%
  */
 
+import com.pi4j.component.servo.ServoProvider;
+import com.pi4j.gpio.extension.pca.PCA9685GpioProvider;
+import com.pi4j.gpio.extension.pca.PCA9685Pin;
+import com.pi4j.io.gpio.Pin;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.pi4j.component.servo.ServoDriver;
-import com.pi4j.component.servo.ServoProvider;
-import com.pi4j.gpio.extension.pca.PCA9685GpioProvider;
-import com.pi4j.gpio.extension.pca.PCA9685Pin;
-import com.pi4j.io.gpio.Pin;
 
 public class PCA9685GpioServoProvider implements ServoProvider {
 
@@ -57,7 +56,7 @@ public class PCA9685GpioServoProvider implements ServoProvider {
     }
 
     @Override
-    public synchronized ServoDriver getServoDriver(Pin servoPin) throws IOException {
+    public synchronized PCA9685GpioServoDriver getServoDriver(Pin servoPin) throws IOException {
         List<Pin> servoPins = getDefinedServoPins();
         int index = servoPins.indexOf(servoPin);
         if (index < 0) {

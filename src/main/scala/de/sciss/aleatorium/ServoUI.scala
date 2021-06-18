@@ -111,7 +111,8 @@ object ServoUI {
         servoDriver.setServoPulseWidth(micros)
       }
       val bOff = Button("Off") {
-        servoDriver.setServoPulseWidth(0)
+//        servoDriver.setServoPulseWidth(0)
+        servoDriver.getProvider.setAlwaysOff(pin)
       }
       val bp = new BoxPanel(Orientation.Horizontal)
       bp.contents += sl
