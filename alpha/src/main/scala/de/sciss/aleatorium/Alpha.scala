@@ -41,8 +41,8 @@ object Alpha {
 
   object Awake extends ArmPos(
     base     =  90,
-    lowArm   = 118, //
-    highArm  =  11,
+    lowArm   = 117, //
+    highArm  =  12,
     ankle    =  34,
     gripRota = 170,
     gripOpen =  74,
@@ -50,7 +50,7 @@ object Alpha {
 
   object Raise1 extends ArmPos(
     base     =  90,
-    lowArm   = 119, //
+    lowArm   = 117, // 119, //
     highArm  =  20, //
     ankle    =  30, //
     gripRota = 170,
