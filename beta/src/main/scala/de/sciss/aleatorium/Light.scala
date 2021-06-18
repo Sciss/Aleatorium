@@ -14,6 +14,7 @@
 package de.sciss.aleatorium
 
 import com.github.mbelling.ws281x.{Color, LedStripType, Ws281xLedStrip}
+import de.sciss.osc
 import org.rogach.scallop.{ScallopConf, ScallopOption => Opt}
 
 trait Light {
@@ -29,6 +30,7 @@ object Light {
                      verbose    : Boolean   = false,
                      flashDur   : Int       = 100,
                      flashRGB   : Int       = 0xFFFFFF,
+                     oscPort    : Int       = 57120,
                    )
 
   def apply(config: Config): Light = new Impl(config)
@@ -54,6 +56,12 @@ object Light {
         descr   = s"Flash RGB colour (default: ${default.flashRGB}).",
         validate = x => x >= 0 && x <= 0xFFFFFF,
       )
+      val oscPort: Opt[Int] = opt(
+        name    = "port",
+        default = Some(default.oscPort),
+        descr   = s"OSC port or 0 to flash immediately (default: ${default.oscPort}).",
+        validate = x => x >= 0 && x <= 0xFFFFFF,
+      )
       val verbose: Opt[Boolean] = opt("verbose", short = 'V', default = Some(false),
         descr = "Verbose printing."
       )
@@ -64,17 +72,35 @@ object Light {
         flashDur  = flashDur(),
         flashRGB  = flashRGB(),
         verbose   = verbose(),
+        oscPort   = oscPort(),
       )
     }
 
     run(p.config)
   }
 
-  def run(config: Config): Unit = {
-    val light = Light(config)
+  private def flash(light: Light, config: Config): Unit = {
     light.setRGB(config.flashRGB)
     Thread.sleep(config.flashDur)
     light.setRGB(0)
+  }
+
+  def run(config: Config): Unit = {
+    val light = Light(config)
+    if (config.oscPort == 0) {
+      flash(light, config)
+    } else {
+      val rCfg = osc.UDP.Config()
+      rCfg.localIsLoopback = true
+      rCfg.localPort       = config.oscPort
+      val rcv = osc.UDP.Receiver(rCfg)
+      rcv.action = {
+        case (osc.Message("/flash"), _) =>
+          flash(light, config)
+        case (x, from) =>
+          println(s"Unsupport OSC packet $x from $from")
+      }
+    }
   }
 
   private final class Impl(config: Config) extends Light {

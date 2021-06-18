@@ -219,7 +219,7 @@ object Beta {
     val sCfg = ServoUI.Config(
       /*dryRun = true*/
       presets     = GestureYes,
-      offAfterSeq = true,
+      offAfterSeq = false,    // too fragile in that position
     )
     val runSeq    = Var(false)
     ServoUI.run(sCfg, ArmModel(Park), runSeq)
