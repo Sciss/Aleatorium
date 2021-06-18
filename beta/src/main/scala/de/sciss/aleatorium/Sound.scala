@@ -14,6 +14,8 @@ object Sound {
                    onsetThresh: Double = -12.dbAmp,
                    path: String = "/home/pi/Music/shouldhalde-210606-selva.aif",
 //                   fileChannels: Int = 2,
+                   gain: Double = +12.dbAmp,
+                   limiter: Boolean = true,
                    verbose: Boolean = false,
                    dumpOSC: Boolean = false,
                    )
@@ -40,13 +42,20 @@ object Sound {
       val dumpOSC: Opt[Boolean] = opt("dump-osc", default = Some(default.dumpOSC),
         descr = "Enable SuperCollider OSC printing."
       )
-
+      val limiter: Opt[Boolean] = opt("limiter", default = Some(default.limiter),
+        descr = s"Volume limiter (default: ${default.limiter})."
+      )
+      val gain: Opt[Double] = opt("gain", default = Some(default.gain),
+        descr = s"Volume boost factor (default: ${default.gain})."
+      )
       verify()
       val config: Config = Config(
         onsetThresh = onsetThresh(),
         path        = path(),
         verbose     = verbose(),
         dumpOSC     = dumpOSC(),
+        gain        = gain(),
+        limiter     = limiter(),
       )
     }
 
@@ -76,14 +85,15 @@ object Sound {
       import ugen._
       val in  = DiskIn.ar(1 /*c.fileChannels*/, "buf".ir, loop = 1)
       val in0 = in // .out(0)
-      in0.poll(1, "test")
-      val sig = in0 + WhiteNoise.ar(0.05)
+      if (c.dumpOSC) in0.poll(1, "test")
+      val lvl = in0 * "amp".kr(1.0)
+      val sig = if (c.limiter) Limiter.ar(lvl) else lvl // + WhiteNoise.ar(0.05)
       Out.ar(0, sig)
     }
     val m = b.allocMsg(32768, completion =
       b.readChannelMsg(c.path, leaveOpen = true, channels = 0 :: Nil, completion =
         sd.recvMsg(completion =
-          syn.newMsg(dn, args = Seq("buf" -> b.id))
+          syn.newMsg(dn, args = Seq("buf" -> b.id, "amp" -> c.gain))
         )
       )
     )
