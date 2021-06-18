@@ -15,6 +15,7 @@ object Sound {
                    path: String = "/home/pi/Music/shouldhalde-210606-selva.aif",
 //                   fileChannels: Int = 2,
                    verbose: Boolean = false,
+                   dumpOSC: Boolean = false,
                    )
 
   def main(args: Array[String]): Unit = {
@@ -33,8 +34,11 @@ object Sound {
         descr   = s"Sound file path (default: ${default.path}).",
         validate = x => new File(x).isFile,
       )
-      val verbose: Opt[Boolean] = opt("verbose", short = 'V', default = Some(false),
+      val verbose: Opt[Boolean] = opt("verbose", short = 'V', default = Some(config.verbose),
         descr = "Verbose printing."
+      )
+      val dumpOSC: Opt[Boolean] = opt("dump-osc", default = Some(config.dumpOSC),
+        descr = "Enable SuperCollider OSC printing."
       )
 
       verify()
@@ -42,6 +46,7 @@ object Sound {
         onsetThresh = onsetThresh(),
         path        = path(),
         verbose     = verbose(),
+        dumpOSC     = dumpOSC(),
       )
     }
 
@@ -56,6 +61,7 @@ object Sound {
     sCfg.pickPort()
     Server.boot(config = sCfg) {
       case ServerConnection.Running(s) =>
+        if (c.dumpOSC) s.dumpOSC()
         booted(c, s)
     }
   }
