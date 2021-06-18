@@ -66,6 +66,8 @@ object Sound {
     }
   }
 
+  def any2stringadd: Any = ()
+
   def booted(c: Config, s: Server): Unit = {
     val b     = Buffer(s)
     val dn    = "play"
@@ -74,8 +76,9 @@ object Sound {
       import ugen._
       val in  = DiskIn.ar(1 /*c.fileChannels*/, "buf".ir, loop = 1)
       val in0 = in // .out(0)
-      val sig = in0
-      PhysicalOut.ar(0, sig)
+      in0.poll(1, "test")
+      val sig = in0 + WhiteNoise.ar(0.05)
+      Out.ar(0, sig)
     }
     val m = b.allocMsg(32768, completion =
       b.readChannelMsg(c.path, leaveOpen = true, channels = 0 :: Nil, completion =
