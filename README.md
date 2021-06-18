@@ -37,3 +37,10 @@ To run
     java -Xmx768m -jar aleatorium.jar
 
 ## test runs
+
+Light:
+
+TODO: `Can't open /dev/mem: Permission denied`. Currently must use `sudo` for:
+
+    java -cp aleatorium.jar:lib/rpi-ws281x-java-2.0.0-SNAPSHOT.jar de.sciss.aleatorium.Light
+

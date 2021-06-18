@@ -29,6 +29,9 @@ lazy val root = project.in(file("."))
       "de.sciss"      %% "swingplus"            % deps.main.swingPlus,  // user interface
       "net.harawata"  %  "appdirs"              % deps.main.appDirs,    // finding standard directories
       "org.rogach"    %% "scallop"              % deps.main.scallop,    // command line option parsing
+      "org.apache.logging.log4j" % "log4j-api"  % deps.main.log4j,      // needed by rpi-ws28x-java
+      "org.apache.logging.log4j" % "log4j-core" % deps.main.log4j,      // needed by rpi-ws28x-java
+
     ),
     buildInfoPackage := "de.sciss.aleatorium",
   )
@@ -37,6 +40,7 @@ lazy val deps = new {
   lazy val main = new {
     val appDirs   = "1.2.1"
     val fileUtil  = "1.1.5"
+    val log4j     = "2.10.0"
     val numbers   = "0.2.1"
     val pi4j      = "1.4"
     val scallop   = "4.0.2"
