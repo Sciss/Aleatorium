@@ -32,7 +32,7 @@ object Alpha {
 
   object Park extends ArmPos(
     base     =  90,
-    lowArm   = 118, //
+    lowArm   = 118 + 1, //
     highArm  =  10,
     ankle    =  34,
     gripRota = 170,
@@ -68,7 +68,7 @@ object Alpha {
 
   object Reach2 extends ArmPos(
     base     =  90,
-    lowArm   = 138, //
+    lowArm   = 138 + 1, //
     highArm  =  59, //
     ankle    =  15,
     gripRota = 170,
@@ -77,7 +77,7 @@ object Alpha {
 
   object Reach3 extends ArmPos(
     base     =  90,
-    lowArm   = 146, //
+    lowArm   = 146 + 1, //
     highArm  =  71, //
     ankle    =  10, //
     gripRota = 170,
@@ -86,7 +86,7 @@ object Alpha {
 
   object Grab1 extends ArmPos(
     base     =  90,
-    lowArm   = 150, //
+    lowArm   = 150 + 1, //
     highArm  =  71,
     ankle    =  10,
     gripRota = 170,
@@ -95,7 +95,7 @@ object Alpha {
 
   object Grab2 extends ArmPos(
     base     =  90,
-    lowArm   = 150,
+    lowArm   = 150 + 1,
     highArm  =  71,
     ankle    =  10,
     gripRota = 170,

@@ -219,7 +219,8 @@ object ServoUI {
 
 
     def stepRunSeq(): Unit = {
-      val pst = config.presets(seqRunIdx)
+      val pstSeq  = config.presets
+      val pst     = pstSeq(seqRunIdx % pstSeq.size)
       model.name() = pst.name
       sliders.zip(pst.pos.seq).zip(model.motors).foreach { case ((sl, v), vr) =>
         sl.value = v
@@ -232,7 +233,7 @@ object ServoUI {
         Swing.onEDT {
           if (seqRunning) {
             seqRunIdx += 1
-            if (seqRunIdx < config.presets.size) {
+            if (seqRunIdx <= config.presets.size) {
               stepRunSeq()
             } else {
               stopSeq()
@@ -244,10 +245,15 @@ object ServoUI {
     bRunSeq.reactions += {
       case ButtonClicked(_) =>
         stopSeq()
-        if (config.presets.nonEmpty) {
-          seqRunning  = true
-          seqRunIdx   = 0
-          stepRunSeq()
+        val pstSeq = config.presets
+        if (pstSeq.nonEmpty) {
+          if (pstSeq.head.pos != model.current) {
+            model.name() = "Not in initial!"
+          } else {
+            seqRunning  = true
+            seqRunIdx   = 1
+            stepRunSeq()
+          }
         }
     }
 
