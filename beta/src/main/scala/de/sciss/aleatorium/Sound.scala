@@ -1,5 +1,6 @@
 package de.sciss.aleatorium
 
+import de.sciss.audiofile.AudioFile
 import de.sciss.numbers.Implicits._
 import de.sciss.osc
 import de.sciss.synth.{Buffer, Server, ServerConnection, Synth, SynthDef}
@@ -36,6 +37,9 @@ object Sound {
         descr   = s"Sound file path (default: ${default.path}).",
         validate = x => new File(x).isFile,
       )
+//      val fileChannels: Opt[Boolean] = opt("channels", default = Some(default.fileChannels),
+//        descr = "Verbose printing."
+//      )
       val verbose: Opt[Boolean] = opt("verbose", short = 'V', default = Some(default.verbose),
         descr = "Verbose printing."
       )
@@ -78,20 +82,22 @@ object Sound {
   def any2stringadd: Any = ()
 
   def booted(c: Config, s: Server): Unit = {
+    val spec  = AudioFile.readSpec(c.path)
+    val fileChannels = spec.numChannels
     val b     = Buffer(s)
     val dn    = "play"
     val syn   = Synth(s)
     val sd = SynthDef("play") {
       import ugen._
-      val in  = DiskIn.ar(1 /*c.fileChannels*/, "buf".ir, loop = 1)
-      val in0 = in // .out(0)
+      val in  = DiskIn.ar(/*1*/ fileChannels, "buf".ir, loop = 1)
+      val in0 = in.out(0)
       if (c.dumpOSC) in0.poll(1, "test")
       val lvl = in0 * "amp".kr(1.0)
       val sig = if (c.limiter) Limiter.ar(lvl) else lvl // + WhiteNoise.ar(0.05)
       Out.ar(0, sig)
     }
-    val m = b.allocMsg(32768, completion =
-      b.readChannelMsg(c.path, leaveOpen = true, channels = 0 :: Nil, completion =
+    val m = b.allocMsg(numFrames = 32768, numChannels = fileChannels, completion =
+      b.readMsg /*readChannelMsg*/(c.path, leaveOpen = true, /*channels = 0 :: Nil,*/ completion =
         sd.recvMsg(completion =
           syn.newMsg(dn, args = Seq("buf" -> b.id, "amp" -> c.gain))
         )
