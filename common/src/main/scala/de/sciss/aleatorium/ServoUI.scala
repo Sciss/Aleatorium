@@ -69,11 +69,11 @@ object ServoUI {
     }
 
     Swing.onEDT {
-      run(p.config, ArmModel(ArmPos.Unknown))
+      run(p.config, ArmModel(ArmPos.Unknown), Var(false))
     }
   }
 
-  def run(config: Config, model: ArmModel): Unit = {
+  def run(config: Config, model: ArmModel, runSeq: Var[Boolean]): Unit = {
     val gpioProvider = createProvider(i2cBus = config.i2cBus, freq = config.freq)
     val gpio = GpioFactory.getInstance
     val pins = Seq(
@@ -93,14 +93,21 @@ object ServoUI {
     def calculatePwmDuration(angle: Double, lo: Int = 0, hi: Int = 180): Int =
       (angle.clip(lo, hi).linLin(lo, hi, config.pwmMin, config.pwmMax) + 0.5).toInt
 
-    var seqRunning  = false
+//    var seqRunning  = false
     var seqRunIdx   = 0
 
-    def stopSeq(): Unit =
-      if (seqRunning) {
-        seqRunning    = false
+    runSeq.addListener {
+      case false =>
         model.name() = "Stopped"
-      }
+    }
+
+    def stopSeq(): Unit = {
+      //      if (seqRunning) {
+      //        seqRunning    = false
+      //        model.name() = "Stopped"
+      //      }
+      runSeq() = false
+    }
 
     val txLine = new TextField(4)
     txLine.editable = false
@@ -218,18 +225,18 @@ object ServoUI {
     }
 
 
-    def stepRunSeq(duration: Int): Unit = {
+    def stepRunSeq(): Unit = {
       val pstSeq  = config.presets
       val pst     = pstSeq(seqRunIdx % pstSeq.size)
       model.name() = pst.name
       sliders.zip(pst.pos.seq).zip(model.motors).foreach { case ((sl, v), vr) =>
         sl.value = v
-        if (duration == 0) {
+        if (seqRunIdx == 0) {
           vr() = v
           Thread.sleep(500) // XXX TODO ugly
           nextSeqStep()
         } else {
-          vr.lineTo(v, duration = duration)
+          vr.lineTo(v, duration = 2000)
         }
       }
     }
@@ -237,7 +244,7 @@ object ServoUI {
     def nextSeqStep(): Unit = {
       seqRunIdx += 1
       if (seqRunIdx <= config.presets.size) {
-        stepRunSeq(duration = 2000)
+        stepRunSeq()
       } else {
         stopSeq()
       }
@@ -246,7 +253,7 @@ object ServoUI {
     model.anim.addListener {
       case false =>
         Swing.onEDT {
-          if (seqRunning) {
+          if (runSeq()) {
             nextSeqStep()
           }
         }
@@ -260,9 +267,9 @@ object ServoUI {
           if (pstSeq.head.pos != model.current) {
             model.name() = "Not in initial!"
           } else {
-            seqRunning  = true
-            seqRunIdx   = 1
-            stepRunSeq(duration = 0)
+            runSeq()    = true
+            seqRunIdx   = 0
+            stepRunSeq()
           }
         }
     }

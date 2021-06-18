@@ -268,7 +268,18 @@ object Alpha {
       /*dryRun = true*/
       presets = Gesture
     )
-    ServoUI.run(sCfg, ArmModel(Park))
+    val runSeq    = Var(false)
+    val butState  = Var(true)
+    ServoUI.run(sCfg, ArmModel(Park), runSeq)
+    val fCfg = FootSwitch.Config()
+    FootSwitch.run(fCfg, butState)
+    butState.addListener {
+      case false =>
+        if (!runSeq()) {
+          println("Launch sequence")
+          runSeq() = true
+        }
+    }
   }
 
   def shutdown(): Unit = {

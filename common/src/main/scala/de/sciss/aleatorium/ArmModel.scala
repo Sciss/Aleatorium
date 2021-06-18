@@ -21,22 +21,6 @@ import java.util.{Timer, TimerTask}
 object ArmModel {
   def apply(init: ArmPos): ArmModel = new Impl(init)
 
-  private final class VarImpl[A](init: A, sync: AnyRef) extends Var[A] with ModelImpl[A] {
-    private var _value = init
-
-    override def apply(): A = sync.synchronized(_value)
-
-    override def update(value: A): Unit = {
-      val change = sync.synchronized {
-        (_value != value) && {
-          _value = value
-          true
-        }
-      }
-      if (change) dispatch(value)
-    }
-  }
-
   private final class IntVarImpl(impl: Impl, init: Int, sync: AnyRef) extends LineVar[Int] with ModelImpl[Int] {
     private var _value        = init
     private var _startValue   = init
@@ -112,9 +96,9 @@ object ArmModel {
     override def gripRota : LineVar[Int] = _gripRota
     override def gripOpen : LineVar[Int] = _gripOpen
 
-    override val name: Var[String] = new VarImpl("", sync = sync)
+    override val name: Var[String] = Var("")
 
-    private val _anim = new VarImpl(false, sync = sync)
+    private val _anim = Var(false)
 
     override def anim: Expr[Boolean] = _anim
 
