@@ -31,7 +31,7 @@ object ServoUI {
                      pwmMax     : Int             = 2500,
                      freq       : Double          = 50.0,
                      dryRun     : Boolean         = false,
-                     presets    : Seq[NamedPos]   = Seq.empty,
+                     presets    : Seq[KeyFrame]   = Seq.empty,
                      offAfterSeq: Boolean         = false,
                    )
 
@@ -129,7 +129,7 @@ object ServoUI {
       new Label("Line Duration:"), slLine, txLine
     )
 
-    val ggPresets = new ComboBox[NamedPos](config.presets)
+    val ggPresets = new ComboBox[KeyFrame](config.presets)
     val lbSeqName = new TextField(8)
     lbSeqName.editable = false
 
@@ -232,7 +232,7 @@ object ServoUI {
           Thread.sleep(500) // XXX TODO ugly
           nextSeqStep()
         } else {
-          vr.lineTo(v, duration = 2000)
+          vr.lineTo(v, duration = pst.dur /*2000*/)
         }
       }
     }

@@ -1,5 +1,5 @@
 package de.sciss.aleatorium
 
-case class NamedPos(name: String, pos: ArmPos) {
+case class KeyFrame(name: String, pos: ArmPos, dur: Int = 2000) {
   override def toString: String = name
 }
