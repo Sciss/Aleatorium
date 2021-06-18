@@ -100,6 +100,15 @@ object Light {
         case (x, from) =>
           println(s"Unsupport OSC packet $x from $from")
       }
+      rcv.connect()
+      println(s"Light awaiting /flush messages on OSC port ${config.oscPort}")
+      new Thread {
+        private val forever = new AnyRef
+
+        override def run(): Unit = forever.synchronized {
+          forever.wait()
+        }
+      }
     }
   }
 
