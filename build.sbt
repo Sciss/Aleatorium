@@ -20,17 +20,16 @@ lazy val commonSettings = Seq(
 
 lazy val root = project.in(file("."))
   .aggregate(common, alpha, beta)
-  .enablePlugins(BuildInfoPlugin)
   .settings(commonSettings)
-  .settings(buildInfoSettings)
   .settings(
     name := baseName,
     description  := "An installation piece",
-    buildInfoPackage := "de.sciss.aleatorium",
   )
 
 lazy val common = project.in(file("common"))
+  .enablePlugins(BuildInfoPlugin)
   .settings(commonSettings)
+  .settings(buildInfoSettings)
   .settings(
     name := s"$baseName-common",
     description := "Common code",
@@ -43,6 +42,7 @@ lazy val common = project.in(file("common"))
       "net.harawata"  %  "appdirs"              % deps.common.appDirs,    // finding standard directories
       "org.rogach"    %% "scallop"              % deps.common.scallop,    // command line option parsing
     ),
+    buildInfoPackage := "de.sciss.aleatorium",
   )
 
 lazy val alpha = project.in(file("alpha"))
