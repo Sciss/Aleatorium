@@ -1,6 +1,6 @@
 lazy val baseName       = "Aleatorium"
 lazy val baseNameL      = baseName.toLowerCase
-lazy val projectVersion = "0.1.0-SNAPSHOT"
+lazy val projectVersion = "0.2.0-SNAPSHOT"
 
 lazy val buildInfoSettings = Seq(
   // ---- build info ----
@@ -11,51 +11,83 @@ lazy val buildInfoSettings = Seq(
   buildInfoOptions += BuildInfoOption.BuildTime
 )
 
-lazy val root = project.in(file("."))
-  .enablePlugins(BuildInfoPlugin)
-  .settings(buildInfoSettings)
-  .settings(assemblySettings)
-  .settings(
-    name         := baseName,
-    description  := "An installation piece",
-    version      := projectVersion,
-    homepage     := Some(url(s"https://git.iem.at/sciss/$baseName")),
-    licenses     := Seq("AGPL v3+" -> url("http://www.gnu.org/licenses/agpl-3.0.txt")),
-    scalaVersion := "2.13.6",
-    libraryDependencies ++= Seq(
-      "com.pi4j"      %  "pi4j-core"            % deps.main.pi4j,       // GPIO control
-      "de.sciss"      %% "fileutil"             % deps.main.fileUtil,   // utility functions
-      "de.sciss"      %% "numbers"              % deps.main.numbers,    // numeric utilities
-      "de.sciss"      %% "swingplus"            % deps.main.swingPlus,  // user interface
-      "net.harawata"  %  "appdirs"              % deps.main.appDirs,    // finding standard directories
-      "org.rogach"    %% "scallop"              % deps.main.scallop,    // command line option parsing
-      "org.apache.logging.log4j" % "log4j-api"  % deps.main.log4j,      // needed by rpi-ws28x-java
-      "org.apache.logging.log4j" % "log4j-core" % deps.main.log4j,      // needed by rpi-ws28x-java
+lazy val commonSettings = Seq(
+  version      := projectVersion,
+  homepage     := Some(url(s"https://git.iem.at/sciss/$baseName")),
+  scalaVersion := "2.13.6",
+  licenses     := Seq("AGPL v3+" -> url("http://www.gnu.org/licenses/agpl-3.0.txt")),
+)
 
-    ),
+lazy val root = project.in(file("."))
+  .aggregate(common, alpha, beta)
+  .enablePlugins(BuildInfoPlugin)
+  .settings(commonSettings)
+  .settings(buildInfoSettings)
+  .settings(
+    name := baseName,
+    description  := "An installation piece",
     buildInfoPackage := "de.sciss.aleatorium",
   )
 
+lazy val common = project.in(file("common"))
+  .settings(commonSettings)
+  .settings(
+    name := s"$baseName-common",
+    description := "Common code",
+    libraryDependencies ++= Seq(
+      "com.pi4j"      %  "pi4j-core"            % deps.common.pi4j,       // GPIO control
+      "de.sciss"      %% "fileutil"             % deps.common.fileUtil,   // utility functions
+      "de.sciss"      %% "numbers"              % deps.common.numbers,    // numeric utilities
+      "de.sciss"      %% "swingplus"            % deps.common.swingPlus,  // user interface
+      "net.harawata"  %  "appdirs"              % deps.common.appDirs,    // finding standard directories
+      "org.rogach"    %% "scallop"              % deps.common.scallop,    // command line option parsing
+    ),
+  )
+
+lazy val alpha = project.in(file("alpha"))
+  .dependsOn(common)
+  .settings(commonSettings)
+  .settings(assemblySettings)
+  .settings(
+    name := s"$baseName-alpha",
+    description := "Top robot",
+    assembly / mainClass       := Some("de.sciss.aleatorium.Alpha"),
+    assembly / assemblyJarName := s"$baseNameL-alpha.jar",
+  )
+
+lazy val beta = project.in(file("beta"))
+  .dependsOn(common)
+  .settings(commonSettings)
+  .settings(assemblySettings)
+  .settings(
+    name := s"$baseName-beta",
+    description := "Bottom robot",
+    assembly / mainClass       := Some("de.sciss.aleatorium.Beta"),
+    assembly / assemblyJarName := s"$baseNameL-beta.jar",
+    libraryDependencies ++= Seq(
+      "org.apache.logging.log4j" % "log4j-api"  % deps.beta.log4j,      // needed by rpi-ws28x-java
+      "org.apache.logging.log4j" % "log4j-core" % deps.beta.log4j,      // needed by rpi-ws28x-java
+    ),
+  )
+
 lazy val deps = new {
-  lazy val main = new {
+  val common = new {
     val appDirs   = "1.2.1"
     val fileUtil  = "1.1.5"
-    val log4j     = "2.10.0"
     val numbers   = "0.2.1"
     val pi4j      = "1.4"
     val scallop   = "4.0.2"
     val swingPlus = "0.5.0"
   }
+  val beta = new {
+    val log4j     = "2.10.0"
+  }
 }
-
-def appMainClass = Some("de.sciss.aleatorium.PiRun")
 
 lazy val assemblySettings = Seq(
   // ---- assembly ----
   assembly / test            := {},
-  assembly / mainClass       := appMainClass,
   assembly / target          := baseDirectory.value,
-  assembly / assemblyJarName := s"$baseNameL.jar",
   assembly / assemblyMergeStrategy := {
     case "logback.xml" => MergeStrategy.last
     case PathList("org", "xmlpull", _ @ _*)              => MergeStrategy.first
