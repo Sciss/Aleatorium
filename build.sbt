@@ -66,7 +66,8 @@ lazy val beta = project.in(file("beta"))
     assembly / mainClass       := Some("de.sciss.aleatorium.Beta"),
     assembly / assemblyJarName := s"$baseNameL-beta.jar",
     libraryDependencies ++= Seq(
-      "de.sciss" %% "scalaosc"  % deps.beta.scalaOSC,  // to LED process
+      "de.sciss" %% "scalacollider"   % deps.beta.scalaCollider,  // sound
+      "de.sciss" %% "scalaosc"        % deps.beta.scalaOSC,       // to LED process
       "org.apache.logging.log4j" % "log4j-api"  % deps.beta.log4j,      // needed by rpi-ws28x-java
       "org.apache.logging.log4j" % "log4j-core" % deps.beta.log4j,      // needed by rpi-ws28x-java
     ),
@@ -83,6 +84,7 @@ lazy val deps = new {
     val swingPlus = "0.5.0"
   }
   val beta = new {
+    val scalaCollider = "2.6.4"
     val scalaOSC  = "1.3.1"
     val log4j     = "2.10.0"
   }

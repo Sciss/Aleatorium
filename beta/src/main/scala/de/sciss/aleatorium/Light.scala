@@ -79,26 +79,24 @@ object Light {
     run(p.config)
   }
 
-  private def flash(light: Light, config: Config): Unit = {
-    light.setRGB(config.flashRGB)
-    Thread.sleep(config.flashDur)
-    light.setRGB(0)
-  }
-
   def run(config: Config): Unit = {
     val light = Light(config)
     if (config.oscPort == 0) {
-      flash(light, config)
+      light.setRGB(config.flashRGB)
+      Thread.sleep(config.flashDur)
+      light.setRGB(0)
     } else {
       val rCfg = osc.UDP.Config()
       rCfg.localIsLoopback = true
       rCfg.localPort       = config.oscPort
       val rcv = osc.UDP.Receiver(rCfg)
       rcv.action = {
-        case (osc.Message("/flash"), _) =>
-          flash(light, config)
+        case (osc.Message("/flash", color: Int, dur: Int), _) =>
+          light.setRGB(color)
+          Thread.sleep(dur)
+          light.setRGB(0)
         case (x, from) =>
-          println(s"Unsupport OSC packet $x from $from")
+          println(s"Unsupported OSC packet $x from $from")
       }
       rcv.connect()
       println(s"Light awaiting /flush messages on OSC port ${config.oscPort}")
