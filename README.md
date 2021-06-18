@@ -40,6 +40,8 @@ To run
 
 Light:
 
+The JNI library is build via https://github.com/Sciss/rpi-ws281x-java/tree/pi4
+
 TODO: `Can't open /dev/mem: Permission denied`. Currently must use `sudo` for:
 
     java -cp aleatorium.jar:lib/rpi-ws281x-java-2.0.0-SNAPSHOT.jar de.sciss.aleatorium.Light
