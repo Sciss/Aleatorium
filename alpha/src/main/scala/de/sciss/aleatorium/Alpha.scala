@@ -39,6 +39,15 @@ object Alpha {
     gripOpen =  74,
   )
 
+  object Awake extends ArmPos(
+    base     =  90,
+    lowArm   = 118, //
+    highArm  =  11,
+    ankle    =  34,
+    gripRota = 170,
+    gripOpen =  74,
+  )
+
   object Raise1 extends ArmPos(
     base     =  90,
     lowArm   = 119, //
@@ -185,6 +194,7 @@ object Alpha {
 
   val Gesture: Seq[NamedPos] = Seq(
     NamedPos("Park"   , Park    ),
+    NamedPos("Awake"  , Awake   ),
     NamedPos("Raise1" , Raise1  ),
     NamedPos("Raise2" , Raise2  ),
     NamedPos("Reach1" , Reach1  ),
