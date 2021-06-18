@@ -13,7 +13,6 @@
 
 package de.sciss.aleatorium
 
-import de.sciss.aleatorium.ServoUI.Preset
 import org.rogach.scallop.{ScallopConf, ScallopOption => Opt}
 
 import java.io.File
@@ -184,24 +183,24 @@ object Alpha {
     gripOpen =  74,
   )
 
-  def presets: Seq[Preset] = Seq(
-    Preset("Park", Park),
-    Preset("Raise1", Raise1),
-    Preset("Raise2", Raise2),
-    Preset("Reach1", Reach1),
-    Preset("Reach2", Reach2),
-    Preset("Reach3", Reach3),
-    Preset("Grab1", Grab1),
-    Preset("Grab2", Grab2),
-    Preset("Lift1", Lift1),
-    Preset("Lift2", Lift2),
-    Preset("Swerve1", Swerve1),
-    Preset("Swerve2", Swerve2),
-    Preset("Drop", Drop),
-    Preset("Return1", Return1),
-    Preset("Return2", Return2),
-    Preset("Return3", Return3),
-    Preset("Return4", Return4),
+  val Gesture: Seq[NamedPos] = Seq(
+    NamedPos("Park"   , Park    ),
+    NamedPos("Raise1" , Raise1  ),
+    NamedPos("Raise2" , Raise2  ),
+    NamedPos("Reach1" , Reach1  ),
+    NamedPos("Reach2" , Reach2  ),
+    NamedPos("Reach3" , Reach3  ),
+    NamedPos("Grab1"  , Grab1   ),
+    NamedPos("Grab2"  , Grab2   ),
+    NamedPos("Lift1"  , Lift1   ),
+    NamedPos("Lift2"  , Lift2   ),
+    NamedPos("Swerve1", Swerve1 ),
+    NamedPos("Swerve2", Swerve2 ),
+    NamedPos("Drop"   , Drop    ),
+    NamedPos("Return1", Return1 ),
+    NamedPos("Return2", Return2 ),
+    NamedPos("Return3", Return3 ),
+    NamedPos("Return4", Return4 ),
   )
 
 //  object Park extends ArmPos(
@@ -267,7 +266,7 @@ object Alpha {
     println(Alpha.nameAndVersion)
     val sCfg = ServoUI.Config(
       /*dryRun = true*/
-      presets = presets
+      presets = Gesture
     )
     ServoUI.run(sCfg, ArmModel(Park))
   }

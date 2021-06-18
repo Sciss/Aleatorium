@@ -21,7 +21,23 @@ import java.util.{Timer, TimerTask}
 object ArmModel {
   def apply(init: ArmPos): ArmModel = new Impl(init)
 
-  private final class VarImpl(impl: Impl, init: Int, sync: AnyRef) extends Var[Int] with ModelImpl[Int] {
+  private final class VarImpl[A](init: A, sync: AnyRef) extends Var[A] with ModelImpl[A] {
+    private var _value = init
+
+    override def apply(): A = sync.synchronized(_value)
+
+    override def update(value: A): Unit = {
+      val change = sync.synchronized {
+        (_value != value) && {
+          _value = value
+          true
+        }
+      }
+      if (change) dispatch(value)
+    }
+  }
+
+  private final class IntVarImpl(impl: Impl, init: Int, sync: AnyRef) extends LineVar[Int] with ModelImpl[Int] {
     private var _value        = init
     private var _startValue   = init
     private var _targetValue  = init
@@ -82,21 +98,27 @@ object ArmModel {
 
     private val sync = new AnyRef
 
-    private val _base     = new VarImpl(this, pos0.base    , sync)
-    private val _lowArm   = new VarImpl(this, pos0.lowArm  , sync)
-    private val _highArm  = new VarImpl(this, pos0.highArm , sync)
-    private val _ankle    = new VarImpl(this, pos0.ankle   , sync)
-    private val _gripRota = new VarImpl(this, pos0.gripRota, sync)
-    private val _gripOpen = new VarImpl(this, pos0.gripOpen, sync)
+    private val _base     = new IntVarImpl(this, pos0.base    , sync)
+    private val _lowArm   = new IntVarImpl(this, pos0.lowArm  , sync)
+    private val _highArm  = new IntVarImpl(this, pos0.highArm , sync)
+    private val _ankle    = new IntVarImpl(this, pos0.ankle   , sync)
+    private val _gripRota = new IntVarImpl(this, pos0.gripRota, sync)
+    private val _gripOpen = new IntVarImpl(this, pos0.gripOpen, sync)
 
-    override def base     : Var[Int] = _base
-    override def lowArm   : Var[Int] = _lowArm
-    override def highArm  : Var[Int] = _highArm
-    override def ankle    : Var[Int] = _ankle
-    override def gripRota : Var[Int] = _gripRota
-    override def gripOpen : Var[Int] = _gripOpen
+    override def base     : LineVar[Int] = _base
+    override def lowArm   : LineVar[Int] = _lowArm
+    override def highArm  : LineVar[Int] = _highArm
+    override def ankle    : LineVar[Int] = _ankle
+    override def gripRota : LineVar[Int] = _gripRota
+    override def gripOpen : LineVar[Int] = _gripOpen
 
-    private var setAnim = Set.empty[VarImpl]
+    override val name: Var[String] = new VarImpl("", sync = sync)
+
+    private val _anim = new VarImpl(false, sync = sync)
+
+    override def anim: Expr[Boolean] = _anim
+
+    private var setAnim = Set.empty[IntVarImpl]
     private var _tt: TimerTask = null
 
     private def animStep(): Unit = sync.synchronized {
@@ -105,7 +127,7 @@ object ArmModel {
       }
     }
 
-    def addAnim(vr: VarImpl): Unit = sync.synchronized {
+    def addAnim(vr: IntVarImpl): Unit = sync.synchronized {
       val start = setAnim.isEmpty
       setAnim += vr
       if (start) {
@@ -115,23 +137,26 @@ object ArmModel {
         }
         _tt = tt
         timer.scheduleAtFixedRate(tt, 20L, 20L)
+        _anim() = true
       }
     }
 
-    def removeAnim(vr: VarImpl): Boolean = sync.synchronized {
+    def removeAnim(vr: IntVarImpl): Boolean = sync.synchronized {
       val res = setAnim.contains(vr)
       if (res) {
         setAnim -= vr
-        if (setAnim.isEmpty) {
+        val stop = setAnim.isEmpty
+        if (stop) {
           assert (_tt != null)
           _tt.cancel()
           _tt = null
+          _anim() = false
         }
       }
       res
     }
 
-    def variables: Seq[Var[Int]] = Seq(
+    def motors: Seq[LineVar[Int]] = Seq(
       base,
       lowArm,
       highArm,
@@ -153,7 +178,7 @@ object ArmModel {
 trait ArmModel {
   def current: ArmPos
 
-  def variables: Seq[Var[Int]]
+  def motors: Seq[LineVar[Int]]
 
   def base    : Var[Int]
   def lowArm  : Var[Int]
@@ -162,5 +187,7 @@ trait ArmModel {
   def gripRota: Var[Int]
   def gripOpen: Var[Int]
 
+  def anim: Expr[Boolean]
 
+  def name: Var[String]
 }

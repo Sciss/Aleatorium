@@ -15,10 +15,14 @@ package de.sciss.aleatorium
 
 import de.sciss.model.Model
 
-trait Var[A] extends Model[A] {
+trait Expr[A] extends Model[A] {
   def apply(): A
+}
 
+trait Var[A] extends Expr[A] {
   def update(value: A): Unit
+}
 
+trait LineVar[A] extends Var[A] {
   def lineTo(value: A, duration: Int): Unit
 }

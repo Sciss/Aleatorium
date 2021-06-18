@@ -21,7 +21,7 @@ import org.rogach.scallop.{ScallopConf, ScallopOption => Opt}
 import pi4j.component.servo.impl.PCA9685GpioServoProvider
 import pi4j.gpio.extension.pca.{PCA9685GpioProvider, PCA9685Pin}
 
-import scala.swing.event.{SelectionChanged, ValueChanged}
+import scala.swing.event.{ButtonClicked, SelectionChanged, ValueChanged}
 import scala.swing.{BoxPanel, Button, Dimension, FlowPanel, Frame, Label, Orientation, Slider, Swing, TextField}
 
 object ServoUI {
@@ -31,12 +31,8 @@ object ServoUI {
                      pwmMax   : Int             = 2500,
                      freq     : Double          = 50.0,
                      dryRun   : Boolean         = false,
-                     presets  : Seq[Preset]     = Seq.empty,
+                     presets  : Seq[NamedPos]     = Seq.empty,
                    )
-
-  case class Preset(name: String, pos: ArmPos) {
-    override def toString: String = name
-  }
 
   def main(args: Array[String]): Unit = {
     object p extends ScallopConf(args) {
@@ -97,6 +93,14 @@ object ServoUI {
     def calculatePwmDuration(angle: Double, lo: Int = 0, hi: Int = 180): Int =
       (angle.clip(lo, hi).linLin(lo, hi, config.pwmMin, config.pwmMax) + 0.5).toInt
 
+    var seqRunning  = false
+    var seqRunIdx   = 0
+
+    def stopSeq(): Unit =
+      if (seqRunning) {
+        seqRunning    = false
+        model.name() = "Stopped"
+      }
 
     val txLine = new TextField(4)
     txLine.editable = false
@@ -122,14 +126,25 @@ object ServoUI {
       new Label("Line Duration:"), slLine, txLine
     )
 
-    val ggPresets = new ComboBox[Preset](config.presets)
-    val pPresets = new FlowPanel(ggPresets)
+    val ggPresets = new ComboBox[NamedPos](config.presets)
+    val lbSeqName = new TextField(8)
+    lbSeqName.editable = false
+
+    model.name.addListener {
+      case n =>
+        Swing.onEDT {
+          lbSeqName.text = n
+        }
+    }
+
+    val bRunSeq   = new Button("Run Seq")
+    val pPresets  = new FlowPanel(ggPresets, bRunSeq, lbSeqName)
 
     val p = new BoxPanel(Orientation.Vertical)
     p.contents += pPresets
     p.contents += pLine
 
-    val sliders: Seq[Slider] = pins.zipWithIndex.zip(model.variables).map { case ((pin, idx), vr) =>
+    val sliders: Seq[Slider] = pins.zipWithIndex.zip(model.motors).map { case ((pin, idx), vr) =>
       val servoDriver = servoProvider.getServoDriver(pin)
       val txSl = new TextField(4)
       txSl.editable = false
@@ -168,13 +183,16 @@ object ServoUI {
       val bSet = Button("Set") {
 //        val micros = calculatePwmDuration(sl.value)
 //        servoDriver.setServoPulseWidth(micros)
+        stopSeq()
         vr() = sl.value
       }
       val bLine = Button("Line") {
+        stopSeq()
         vr.lineTo(sl.value, slLine.value)
       }
       val bOff = Button("Off") {
 //        servoDriver.setServoPulseWidth(0)
+        stopSeq()
         servoDriver.getProvider.setAlwaysOff(pin)
       }
       val bp = new BoxPanel(Orientation.Horizontal)
@@ -196,6 +214,40 @@ object ServoUI {
         val newPos = ggPresets.selection.item.pos
         sliders.zip(newPos.seq).foreach { case (sl, v) =>
           sl.value = v
+        }
+    }
+
+
+    def stepRunSeq(): Unit = {
+      val pst = config.presets(seqRunIdx)
+      model.name() = pst.name
+      sliders.zip(pst.pos.seq).zip(model.motors).foreach { case ((sl, v), vr) =>
+        sl.value = v
+        vr.lineTo(v, duration = 2000)
+      }
+    }
+
+    model.anim.addListener {
+      case false =>
+        Swing.onEDT {
+          if (seqRunning) {
+            seqRunIdx += 1
+            if (seqRunIdx < config.presets.size) {
+              stepRunSeq()
+            } else {
+              stopSeq()
+            }
+          }
+        }
+    }
+
+    bRunSeq.reactions += {
+      case ButtonClicked(_) =>
+        stopSeq()
+        if (config.presets.nonEmpty) {
+          seqRunning  = true
+          seqRunIdx   = 0
+          stepRunSeq()
         }
     }
 
