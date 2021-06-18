@@ -218,13 +218,28 @@ object ServoUI {
     }
 
 
-    def stepRunSeq(): Unit = {
+    def stepRunSeq(duration: Int): Unit = {
       val pstSeq  = config.presets
       val pst     = pstSeq(seqRunIdx % pstSeq.size)
       model.name() = pst.name
       sliders.zip(pst.pos.seq).zip(model.motors).foreach { case ((sl, v), vr) =>
         sl.value = v
-        vr.lineTo(v, duration = 2000)
+        if (duration == 0) {
+          vr() = v
+          Thread.sleep(500) // XXX TODO ugly
+          nextSeqStep()
+        } else {
+          vr.lineTo(v, duration = duration)
+        }
+      }
+    }
+
+    def nextSeqStep(): Unit = {
+      seqRunIdx += 1
+      if (seqRunIdx <= config.presets.size) {
+        stepRunSeq(duration = 2000)
+      } else {
+        stopSeq()
       }
     }
 
@@ -232,12 +247,7 @@ object ServoUI {
       case false =>
         Swing.onEDT {
           if (seqRunning) {
-            seqRunIdx += 1
-            if (seqRunIdx <= config.presets.size) {
-              stepRunSeq()
-            } else {
-              stopSeq()
-            }
+            nextSeqStep()
           }
         }
     }
@@ -252,7 +262,7 @@ object ServoUI {
           } else {
             seqRunning  = true
             seqRunIdx   = 1
-            stepRunSeq()
+            stepRunSeq(duration = 0)
           }
         }
     }
