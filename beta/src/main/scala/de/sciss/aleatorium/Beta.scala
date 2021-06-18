@@ -21,6 +21,95 @@ import java.util.{Date, Locale}
 import scala.util.control.NonFatal
 
 object Beta {
+  object Park extends ArmPos(
+    base     = 145,
+    lowArm   =  90,
+    highArm  =  83,
+    ankle    =  84,
+    gripRota = 176,
+    gripOpen =  81,
+  )
+
+  object Awake extends ArmPos(
+    base     = 144, //
+    lowArm   =  91, //
+    highArm  =  82, //
+    ankle    =  83, //
+    gripRota = 175, //
+    gripOpen =  80, //
+  )
+
+  object Orient1 extends ArmPos(
+    base     =  90, //
+    lowArm   =  93, //
+    highArm  =  80, //
+    ankle    =  76, //
+    gripRota = 175,
+    gripOpen =  78, //
+  )
+
+  object Orient2 extends ArmPos(
+    base     =  90, //
+    lowArm   =  93,
+    highArm  =  80,
+    ankle    =  41, //
+    gripRota = 175,
+    gripOpen =  78, //
+  )
+
+  object No1 extends ArmPos(
+    base     =  66, //
+    lowArm   =  93,
+    highArm  =  80,
+    ankle    =  41,
+    gripRota = 175,
+    gripOpen =  72, //
+  )
+
+  object No2 extends ArmPos(
+    base     = 124, //
+    lowArm   =  93,
+    highArm  =  80,
+    ankle    =  41,
+    gripRota = 175,
+    gripOpen =  72, //
+  )
+
+  object No3 extends ArmPos(
+    base     =  90,
+    lowArm   =  93,
+    highArm  =  80,
+    ankle    =  41,
+    gripRota = 175,
+    gripOpen =  72, //
+  )
+
+  val Return1: ArmPos = Orient2
+  val Return2: ArmPos = Orient1
+  val Return3: ArmPos = Awake
+
+  val Gesture: Seq[NamedPos] = Seq(
+    NamedPos("Park"   , Park    ),
+    NamedPos("Awake"  , Awake   ),
+    NamedPos("Orient1" , Orient1  ),
+    NamedPos("Orient2" , Orient2 ),
+    NamedPos("No1" , No1  ),
+    NamedPos("No2" , No2  ),
+    NamedPos("No3" , No3  ),
+    NamedPos("Return1"  , Return1   ),
+    NamedPos("Return2"  , Return2   ),
+    NamedPos("Return3"  , Return3   ),
+  )
+
+  //  object Park extends ArmPos(
+  //    base     =  90,
+  //    lowArm   = 118, //
+  //    highArm  =  10,
+  //    ankle    =  34,
+  //    gripRota = 170,
+  //    gripOpen =  74,
+  //  )
+
   case class Config(
                      initDelay  : Int     = 120,
                      verbose    : Boolean = false,
@@ -73,6 +162,20 @@ object Beta {
 
   def run(c: Config): Unit = {
     println(Beta.nameAndVersion)
+    val sCfg = ServoUI.Config(
+      /*dryRun = true*/
+      presets     = Gesture,
+      offAfterSeq = true,
+    )
+    val runSeq    = Var(false)
+    ServoUI.run(sCfg, ArmModel(Park), runSeq)
+//    butState.addListener {
+//      case false =>
+//        if (!runSeq()) {
+//          println("Launch sequence")
+//          runSeq() = true
+//        }
+//    }
   }
 
   def shutdown(): Unit = {
