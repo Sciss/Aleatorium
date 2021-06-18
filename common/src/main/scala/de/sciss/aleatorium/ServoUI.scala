@@ -16,11 +16,12 @@ package de.sciss.aleatorium
 import com.pi4j.io.gpio.GpioFactory
 import com.pi4j.io.i2c.I2CFactory
 import de.sciss.numbers.Implicits.doubleNumberWrapper
+import de.sciss.swingplus.ComboBox
 import org.rogach.scallop.{ScallopConf, ScallopOption => Opt}
 import pi4j.component.servo.impl.PCA9685GpioServoProvider
 import pi4j.gpio.extension.pca.{PCA9685GpioProvider, PCA9685Pin}
 
-import scala.swing.event.ValueChanged
+import scala.swing.event.{SelectionChanged, ValueChanged}
 import scala.swing.{BoxPanel, Button, Dimension, FlowPanel, Frame, Label, Orientation, Slider, Swing, TextField}
 
 object ServoUI {
@@ -30,7 +31,12 @@ object ServoUI {
                      pwmMax   : Int             = 2500,
                      freq     : Double          = 50.0,
                      dryRun   : Boolean         = false,
+                     presets  : Seq[Preset]     = Seq.empty,
                    )
+
+  case class Preset(name: String, pos: ArmPos) {
+    override def toString: String = name
+  }
 
   def main(args: Array[String]): Unit = {
     object p extends ScallopConf(args) {
@@ -105,6 +111,8 @@ object ServoUI {
     def updateTxLine(): Unit =
       txLine.text = slLine.value.toString
 
+    updateTxLine()
+
     slLine.reactions += {
       case ValueChanged(_) =>
         updateTxLine()
@@ -114,7 +122,14 @@ object ServoUI {
       new Label("Line Duration:"), slLine, txLine
     )
 
-    val sliders = pins.zipWithIndex.zip(model.variables).map { case ((pin, idx), vr) =>
+    val ggPresets = new ComboBox[Preset](config.presets)
+    val pPresets = new FlowPanel(ggPresets)
+
+    val p = new BoxPanel(Orientation.Vertical)
+    p.contents += pPresets
+    p.contents += pLine
+
+    val sliders: Seq[Slider] = pins.zipWithIndex.zip(model.variables).map { case ((pin, idx), vr) =>
       val servoDriver = servoProvider.getServoDriver(pin)
       val txSl = new TextField(4)
       txSl.editable = false
@@ -170,12 +185,19 @@ object ServoUI {
       bp.contents += bLine
       bp.contents += txModel
       bp.contents += bOff
-      bp
+
+      p.contents += bp
+      sl
     }
 
-    val p = new BoxPanel(Orientation.Vertical)
-    p.contents += pLine
-    p.contents ++= sliders
+    ggPresets.listenTo(ggPresets.selection)
+    ggPresets.reactions += {
+      case SelectionChanged(_) =>
+        val newPos = ggPresets.selection.item.pos
+        sliders.zip(newPos.seq).foreach { case (sl, v) =>
+          sl.value = v
+        }
+    }
 
     new Frame {
       title     = "Server UI"

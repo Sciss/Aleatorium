@@ -244,7 +244,7 @@ object Alpha {
 
   def run(c: Config): Unit = {
     println(Alpha.nameAndVersion)
-    ServoUI.run(ServoUI.Config(dryRun = true), ArmModel(Park))
+    ServoUI.run(ServoUI.Config(/*dryRun = true*/), ArmModel(Park))
   }
 
   def shutdown(): Unit = {
