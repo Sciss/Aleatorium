@@ -89,12 +89,20 @@ object Sound {
     val syn   = Synth(s)
     val sd = SynthDef("play") {
       import ugen._
+
+      // generator
       val in  = DiskIn.ar(/*1*/ fileChannels, "buf".ir, loop = 1)
       val in0 = in.out(0)
       if (c.dumpOSC) in0.poll(1, "test")
       val lvl = in0 * "amp".kr(1.0)
       val sig = if (c.limiter) Limiter.ar(lvl) else lvl // + WhiteNoise.ar(0.05)
       Out.ar(0, sig)
+
+      // analysis
+      val mic     = In.ar(NumOutputBuses.ir)
+      val peakTr  = Impulse.kr(10)
+      val peak    = Peak.kr(mic, peakTr)
+      peak.ampDb.poll(peakTr, "peak")
     }
     val m = b.allocMsg(numFrames = 32768, numChannels = fileChannels, completion =
       b.readMsg /*readChannelMsg*/(c.path, leaveOpen = true, /*channels = 0 :: Nil,*/ completion =
