@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Aleatorium
+Type=Application
+GenericName=Sound Installation
+Exec=lxterminal -e "/home/pi/Documents/devel/Aleatorium/run-alpha.sh"
+
