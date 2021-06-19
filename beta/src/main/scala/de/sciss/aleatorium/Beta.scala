@@ -13,9 +13,11 @@
 
 package de.sciss.aleatorium
 
+import de.sciss.osc
 import org.rogach.scallop.{ScallopConf, ScallopOption => Opt}
 
 import java.io.File
+import java.net.InetSocketAddress
 import java.text.SimpleDateFormat
 import java.util.{Date, Locale}
 import scala.util.control.NonFatal
@@ -165,9 +167,11 @@ object Beta {
   //  )
 
   case class Config(
-                     initDelay  : Int     = 120,
-                     verbose    : Boolean = false,
-                     shutdown   : Boolean = true,
+                     initDelay  : Int       = 120,
+                     verbose    : Boolean   = false,
+                     shutdown   : Boolean   = true,
+                     light      : Boolean   = true,
+                     sound      : Boolean   = true,
                    )
 
   private def buildInfString(key: String): String = try {
@@ -204,11 +208,16 @@ object Beta {
       )
       val noShutdown: Opt[Boolean] = opt("no-shutdown", descr = "Do not shutdown Pi after compleition.", default = Some(false))
 
+      val noSound: Opt[Boolean] = opt("no-sound", descr = "Do not play sound.", default = Some(false))
+      val noLight: Opt[Boolean] = opt("no-light", descr = "Do not flash light.", default = Some(false))
+
       verify()
       val config: Config = Config(
         initDelay = initDelay(),
         verbose   = verbose(),
         shutdown  = !noShutdown(),
+        sound     = !noSound(),
+        light     = !noLight(),
       )
     }
     run(p.config)
@@ -216,13 +225,13 @@ object Beta {
 
   def run(c: Config): Unit = {
     println(Beta.nameAndVersion)
-    val sCfg = ServoUI.Config(
+    val uiCfg = ServoUI.Config(
       /*dryRun = true*/
-      presets     = GestureYes,
+      presets     = GestureNo, // GestureYes,
       offAfterSeq = false,    // too fragile in that position
     )
-    val runSeq    = Var(false)
-    ServoUI.run(sCfg, ArmModel(Park), runSeq)
+    val runSeq = Var(false)
+    ServoUI.run(uiCfg, ArmModel(Park), runSeq)
 //    butState.addListener {
 //      case false =>
 //        if (!runSeq()) {
@@ -230,6 +239,34 @@ object Beta {
 //          runSeq() = true
 //        }
 //    }
+
+    val lightOpt = if (c.light) {
+      val tCfg = osc.UDP.Config()
+      tCfg.localIsLoopback = true
+      val t = osc.UDP.Transmitter(tCfg)
+      t.connect()
+      Some(t)
+    } else None
+
+    if (c.sound) {
+      val tgt   = new InetSocketAddress("127.0.0.1", Light.DefaultPort)
+      val sCfg  = Sound.Config(
+        onTrig = { () =>
+          println("Bang!")
+          lightOpt.foreach { t =>
+            try {
+              t.send(osc.Message("/flash", 0xFFFFFF, 100), tgt)
+            } catch {
+              case NonFatal(ex) =>
+                Console.err.println("While sending light OSC:")
+                ex.printStackTrace()
+            }
+            runSeq() = true
+          }
+        },
+      )
+      Sound.run(sCfg)
+    }
   }
 
   def shutdown(): Unit = {

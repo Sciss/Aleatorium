@@ -22,6 +22,8 @@ trait Light {
 }
 
 object Light {
+  val DefaultPort = 57120
+
   case class Config(
                      gpio       : Int       = 18,
                      stripType  : LedStripType = LedStripType.WS2811_STRIP_GRB,
@@ -30,7 +32,7 @@ object Light {
                      verbose    : Boolean   = false,
                      flashDur   : Int       = 100,
                      flashRGB   : Int       = 0xFFFFFF,
-                     oscPort    : Int       = 57120,
+                     oscPort    : Int       = DefaultPort,
                    )
 
   def apply(config: Config): Light = new Impl(config)

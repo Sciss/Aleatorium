@@ -21,6 +21,7 @@ object Sound {
                    limiter: Boolean = true,
                    verbose: Boolean = false,
                    dumpOSC: Boolean = false,
+                   onTrig: () => Unit = () => (),
                    )
 
   def main(args: Array[String]): Unit = {
@@ -62,6 +63,7 @@ object Sound {
         dumpOSC     = dumpOSC(),
         gain        = gain(),
         limiter     = limiter(),
+        onTrig      = () => println("Bang!"),
       )
     }
 
@@ -77,15 +79,13 @@ object Sound {
     Server.boot(config = sCfg) {
       case ServerConnection.Running(s) =>
         if (c.dumpOSC) s.dumpOSC()
-        booted(c, s) {
-          println("Bang!")
-        }
+        booted(c, s)
     }
   }
 
   def any2stringadd: Any = ()
 
-  def booted(c: Config, s: Server)(onTrig: => Unit): Unit = {
+  def booted(c: Config, s: Server): Unit = {
     val spec  = AudioFile.readSpec(c.path)
     val fileChannels = spec.numChannels
     val b     = Buffer(s)
@@ -123,7 +123,7 @@ object Sound {
 
     Responder.add(s) {
       case message.Trigger(syn.id, _, _) =>
-        onTrig
+        c.onTrig()
     }
   }
 }
