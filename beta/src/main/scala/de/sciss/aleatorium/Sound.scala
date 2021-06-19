@@ -5,14 +5,16 @@ import de.sciss.numbers.Implicits._
 import de.sciss.osc
 import de.sciss.synth.{Buffer, Server, ServerConnection, Synth, SynthDef}
 import de.sciss.synth.Ops._
+import de.sciss.synth.message.Responder
 import de.sciss.synth.ugen
+import de.sciss.synth.message
 import org.rogach.scallop.{ScallopConf, ScallopOption => Opt}
 
 import java.io.File
 
 object Sound {
   case class Config(
-                   onsetThresh: Double = -12.dbAmp,
+                   onsetThresh: Double = -6.dbAmp,
                    path: String = "/home/pi/Music/shouldhalde-210606-selva.aif",
 //                   fileChannels: Int = 2,
                    gain: Double = +12.dbAmp,
@@ -75,13 +77,15 @@ object Sound {
     Server.boot(config = sCfg) {
       case ServerConnection.Running(s) =>
         if (c.dumpOSC) s.dumpOSC()
-        booted(c, s)
+        booted(c, s) {
+          println("Bang!")
+        }
     }
   }
 
   def any2stringadd: Any = ()
 
-  def booted(c: Config, s: Server): Unit = {
+  def booted(c: Config, s: Server)(onTrig: => Unit): Unit = {
     val spec  = AudioFile.readSpec(c.path)
     val fileChannels = spec.numChannels
     val b     = Buffer(s)
@@ -100,17 +104,26 @@ object Sound {
 
       // analysis
       val mic     = In.ar(NumOutputBuses.ir)
-      val peakTr  = Impulse.kr(10)
-      val peak    = Peak.kr(mic, peakTr)
-      peak.ampDb.poll(peakTr, "peak")
+//      val peakTr  = Impulse.kr(10)
+//      val peak    = Peak.kr(mic, peakTr)
+//      peak.ampDb.poll(peakTr, "peak")
+      val thresh  = "thresh".kr
+      val loud    = Trig.ar(mic.abs > thresh, dur = 1.0)
+      if (c.dumpOSC) mic.poll(loud, "mic")
+      SendTrig.ar(loud)
     }
     val m = b.allocMsg(numFrames = 32768, numChannels = fileChannels, completion =
       b.readMsg /*readChannelMsg*/(c.path, leaveOpen = true, /*channels = 0 :: Nil,*/ completion =
         sd.recvMsg(completion =
-          syn.newMsg(dn, args = Seq("buf" -> b.id, "amp" -> c.gain))
+          syn.newMsg(dn, args = Seq("buf" -> b.id, "amp" -> c.gain, "thresh" -> c.onsetThresh))
         )
       )
     )
     s ! m
+
+    Responder.add(s) {
+      case message.Trigger(syn.id, _, _) =>
+        onTrig
+    }
   }
 }
