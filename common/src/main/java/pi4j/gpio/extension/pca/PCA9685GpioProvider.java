@@ -158,12 +158,12 @@ public class PCA9685GpioProvider extends GpioProviderBase implements GpioProvide
         int oldMode;
         try {
             oldMode = device.read(PCA9685A_MODE1);
-            int newMode = (oldMode & 0x7F) | 0x10; // sleep
-            device.write(PCA9685A_MODE1     , (byte) newMode); // go to sleep
+            int newMode = (oldMode & 0x7F) | 0x10;                        // sleep
+            device.write(PCA9685A_MODE1     , (byte) newMode);            // go to sleep
             device.write(PCA9685A_PRESCALE  , (byte) prescale);
             device.write(PCA9685A_MODE1     , (byte) oldMode);
-            Thread.sleep(1);
-            device.write(PCA9685A_MODE1     , (byte) (oldMode | 0x80));
+            Thread.sleep(1);                                        // must wait at least 500 microseconds
+            device.write(PCA9685A_MODE1     , (byte) (oldMode | 0x80));   // restart
         } catch (IOException e) {
             throw new RuntimeException("Unable to set prescale value [" + prescale + "]", e);
         } catch (InterruptedException e) {
