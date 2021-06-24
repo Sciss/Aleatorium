@@ -253,9 +253,9 @@ public class PCA9685GpioProvider extends GpioProviderBase implements GpioProvide
         if (live) validatePin(pin, pwmOnValue, pwmOffValue);
         final int channel = pin.getAddress();
         try {
-            device.write(PCA9685A_LED0_ON_L  + 4 * channel, (byte) 0x00);
-            device.write(PCA9685A_LED0_ON_H  + 4 * channel, (byte) 0x00);
-            device.write(PCA9685A_LED0_OFF_L + 4 * channel, (byte) 0x00);
+//            device.write(PCA9685A_LED0_ON_L  + 4 * channel, (byte) 0x00);
+//            device.write(PCA9685A_LED0_ON_H  + 4 * channel, (byte) 0x00);
+//            device.write(PCA9685A_LED0_OFF_L + 4 * channel, (byte) 0x00);
             device.write(PCA9685A_LED0_OFF_H + 4 * channel, (byte) 0x10); // set bit 4 to high
         } catch (IOException e) {
             throw new RuntimeException("Error while trying to set channel [" + channel + "] always OFF.", e);
