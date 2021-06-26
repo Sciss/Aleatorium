@@ -27,14 +27,68 @@ with an unofficial one!
     cd wiringpi
     sudo ./build
 
+## installing SuperCollider on the 'beta' Pi
+
+We build SC 3.10.4:
+
+```
+cd ~/Documents/devel
+git clone https://github.com/supercollider/supercollider.git
+
+sudo apt install libjack-jackd2-dev libsndfile1-dev libasound2-dev libavahi-client-dev \
+libreadline-dev libfftw3-dev libxt-dev libudev-dev libncurses5-dev cmake git qttools5-dev qttools5-dev-tools \
+qtdeclarative5-dev libqt5svg5-dev qjackctl
+
+cd supercollider
+git checkout -b 3.10.4 Version-3.10.4
+
+git submodule update --init --recursive
+
+mkdir build
+cd build
+
+cmake -DCMAKE_BUILD_TYPE=Release -DSUPERNOVA=OFF -DSC_ED=OFF -DSC_EL=OFF -DSC_VIM=ON -DNATIVE=ON -DSC_USE_QTWEBENGINE:BOOL=OFF ..
+
+cmake --build . --config Release --target all -- -j3
+
+sudo cmake --build . --config Release --target install
+```
+
+This installs in `/usr/local/bin`. If debian package has been installed, it will override through `/usr/bin`,
+to remove use `sudo apt remove supercollider-server` (or `-common` I guess?).
+
+We use `JPverb` thus also need `sc3-plugins`:
+
+```
+cd ~/Documents/devel
+git clone https://github.com/supercollider/sc3-plugins.git
+
+cd sc3-plugins
+git checkout -b 3.10.4 643709850b2f22f68792372aaece5fc6512defc6
+
+git submodule update --init --recursive
+
+mkdir build
+cd build
+
+cmake -DSC_PATH=/home/pi/Documents/devel/supercollider/ -SC_PATH=/home/pi/.local/share/SuperCollider ..
+
+cmake --build . --config Release
+
+sudo cmake --build . --config Release --target install
+
+```
+
 ## run on the Raspberry Pi
 
 - THIS NO LONGER works: the JNI library `librpiws28114j.so` must be installed.
 - the JNI library `libws281x.so` must be installed. Copy it to `/usr/lib/jni/`
 
-To run
+See run scripts `run-alpha.sh` and `run-beta.sh`. Note that beta now uses mainly a regular
+Mellite workspace, and no longer the `Sound.scala` source code!
 
-    java -Xmx768m -jar aleatorium.jar
+Beta assumes that light (needs sudo) runs in a separate process via OSC at port 57120,
+and that the arm runs in a separate process via OSC at port 57121.
 
 ## test runs
 

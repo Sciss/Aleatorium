@@ -8,3 +8,6 @@ project/boot/
 *.swp
 /.bsp/
 /kontakt.jar
+alpha/aleatorium-alpha.jar
+beta/aleatorium-beta.jar
+workspaces/*.mllt/*.csv

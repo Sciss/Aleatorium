@@ -7,6 +7,10 @@ sleep 10
 
 sudo java -cp beta/aleatorium-beta.jar:beta/lib/rpi-ws281x-java-2.0.0-SNAPSHOT.jar de.sciss.aleatorium.Light &
 
-sleep 4
+sleep 2
 
-java -cp beta/aleatorium-beta.jar de.sciss.aleatorium.Beta
+java -cp beta/aleatorium-beta.jar de.sciss.aleatorium.Beta --no-sound --no-light -i 0 -V &
+
+sleep 8
+
+mellite-launcher -h -b -r main /home/pi/Documents/projects/Aleatorium/AleatoriumBeta.mllt

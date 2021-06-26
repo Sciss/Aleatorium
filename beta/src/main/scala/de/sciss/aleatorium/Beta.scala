@@ -23,6 +23,17 @@ import java.util.{Date, Locale}
 import scala.util.control.NonFatal
 
 object Beta {
+  final val DefaultPort = 57121
+
+  case class Config(
+                     initDelay  : Int       = 120,
+                     verbose    : Boolean   = false,
+                     shutdown   : Boolean   = true,
+                     light      : Boolean   = true,
+                     sound      : Boolean   = true,
+                     oscPort    : Int       = DefaultPort,
+                   )
+
   object Park extends ArmPos(
     base     = 145,
     lowArm   =  92,
@@ -166,14 +177,6 @@ object Beta {
   //    gripOpen =  74,
   //  )
 
-  case class Config(
-                     initDelay  : Int       = 120,
-                     verbose    : Boolean   = false,
-                     shutdown   : Boolean   = true,
-                     light      : Boolean   = true,
-                     sound      : Boolean   = true,
-                   )
-
   private def buildInfString(key: String): String = try {
     val clazz = Class.forName("de.sciss.aleatorium.BuildInfo")
     val m = clazz.getMethod(key)
@@ -211,6 +214,13 @@ object Beta {
       val noSound: Opt[Boolean] = opt("no-sound", descr = "Do not play sound.", default = Some(false))
       val noLight: Opt[Boolean] = opt("no-light", descr = "Do not flash light.", default = Some(false))
 
+      val oscPort: Opt[Int] = opt(
+        name    = "port",
+        default = Some(default.oscPort),
+        descr   = s"OSC port or 0 to disable OSC input (default: ${default.oscPort}).",
+        validate = x => x >= 0 && x <= 0xFFFFFF,
+      )
+
       verify()
       val config: Config = Config(
         initDelay = initDelay(),
@@ -218,6 +228,7 @@ object Beta {
         shutdown  = !noShutdown(),
         sound     = !noSound(),
         light     = !noLight(),
+        oscPort   = oscPort(),
       )
     }
     run(p.config)
@@ -248,6 +259,25 @@ object Beta {
       Some(t)
     } else None
 
+    def setRunSeq(): Unit =
+      runSeq() = true
+
+    if (c.oscPort > 0) {
+      val rCfg = osc.UDP.Config()
+      rCfg.localIsLoopback = true
+      rCfg.localPort       = c.oscPort
+      val rcv = osc.UDP.Receiver(rCfg)
+      rcv.action = {
+        case (osc.Message("/arm", gesture: Int), _) =>
+          println(s"TO-DO: gesture = $gesture")
+          setRunSeq()
+        case (x, from) =>
+          println(s"Unsupported OSC packet $x from $from")
+      }
+      rcv.connect()
+      println(s"Beta awaiting /arm messages on OSC port ${c.oscPort}")
+    }
+
     if (c.sound) {
       val tgt   = new InetSocketAddress("127.0.0.1", Light.DefaultPort)
       val sCfg  = Sound.Config(
@@ -261,7 +291,7 @@ object Beta {
                 Console.err.println("While sending light OSC:")
                 ex.printStackTrace()
             }
-            runSeq() = true
+            setRunSeq()
           }
         },
       )
