@@ -13,4 +13,4 @@ java -cp beta/aleatorium-beta.jar de.sciss.aleatorium.Beta --no-sound --no-light
 
 sleep 8
 
-mellite-launcher -h -b -r main /home/pi/Documents/projects/Aleatorium/AleatoriumBeta.mllt
+mellite-launcher --headless -b -r main /home/pi/Documents/projects/Aleatorium/workspaces/AleatoriumBeta.mllt
