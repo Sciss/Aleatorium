@@ -21,6 +21,7 @@ import org.rogach.scallop.{ScallopConf, ScallopOption => Opt}
 import pi4j.component.servo.impl.PCA9685GpioServoProvider
 import pi4j.gpio.extension.pca.{PCA9685GpioProvider, PCA9685Pin}
 
+import java.awt.EventQueue
 import scala.swing.event.{ButtonClicked, SelectionChanged, ValueChanged}
 import scala.swing.{BoxPanel, Button, Dimension, FlowPanel, Frame, Label, Orientation, Slider, Swing, TextField}
 
@@ -31,7 +32,7 @@ object ServoUI {
                      pwmMax     : Int             = 2500,
                      freq       : Double          = 50.0,
                      dryRun     : Boolean         = false,
-                     presets    : Seq[KeyFrame]   = Seq.empty,
+                     presets    : Map[String, Seq[KeyFrame]] = Map.empty,
                      offAfterSeq: Boolean         = false,
                    )
 
@@ -70,11 +71,11 @@ object ServoUI {
     }
 
     Swing.onEDT {
-      run(p.config, ArmModel(ArmPos.Unknown), Var(false))
+      run(p.config, ArmModel(ArmPos.Unknown), Var(""), Var(false))
     }
   }
 
-  def run(config: Config, model: ArmModel, runSeq: Var[Boolean]): Unit = {
+  def run(config: Config, model: ArmModel, pstName: Var[String], runSeq: Var[Boolean]): Unit = {
     val gpioProvider = createProvider(i2cBus = config.i2cBus, freq = config.freq)
     val gpio = GpioFactory.getInstance
     val pins = Seq(
@@ -129,9 +130,24 @@ object ServoUI {
       new Label("Line Duration:"), slLine, txLine
     )
 
-    val ggPresets = new ComboBox[KeyFrame](config.presets)
-    val lbSeqName = new TextField(8)
+    val ggPresetName  = new ComboBox[String](config.presets.keys.toList)
+    val ggPresetSq    = new ComboBox[KeyFrame](Nil)
+    val lbSeqName     = new TextField(8)
     lbSeqName.editable = false
+
+    def setPreset(): Unit = {
+      val name = pstName()
+      ggPresetName.selection.item = name
+      val pst = config.presets.getOrElse(name, Nil)
+      ggPresetSq.model = ComboBox.Model.wrap(pst)
+    }
+
+    pstName.addListener {
+      case _ =>
+        if (EventQueue.isDispatchThread) setPreset() else Swing.onEDT(setPreset())
+    }
+
+    setPreset()
 
     model.name.addListener {
       case n =>
@@ -141,7 +157,7 @@ object ServoUI {
     }
 
     val bRunSeq   = new Button("Run Seq")
-    val pPresets  = new FlowPanel(ggPresets, bRunSeq, lbSeqName)
+    val pPresets  = new FlowPanel(ggPresetName, ggPresetSq, bRunSeq, lbSeqName)
 
     val p = new BoxPanel(Orientation.Vertical)
     p.contents += pPresets
@@ -211,35 +227,41 @@ object ServoUI {
       sl
     }
 
-    ggPresets.listenTo(ggPresets.selection)
-    ggPresets.reactions += {
+    ggPresetName.listenTo(ggPresetName.selection)
+    ggPresetName.reactions += {
       case SelectionChanged(_) =>
-        val newPos = ggPresets.selection.item.pos
+        pstName() = ggPresetName.selection.item
+    }
+
+    ggPresetSq.listenTo(ggPresetSq.selection)
+    ggPresetSq.reactions += {
+      case SelectionChanged(_) =>
+        val newPos = ggPresetSq.selection.item.pos
         sliders.zip(newPos.seq).foreach { case (sl, v) =>
           sl.value = v
         }
     }
 
-
     def stepRunSeq(): Unit = {
-      val pstSeq  = config.presets
-      val pst     = pstSeq(seqRunIdx % pstSeq.size)
-      model.name() = pst.name
-      sliders.zip(pst.pos.seq).zip(model.motors).foreach { case ((sl, v), vr) =>
+      val pstSeq    = config.presets.getOrElse(pstName(), Nil)
+      val keyFrame  = pstSeq(seqRunIdx % pstSeq.size)
+      model.name() = keyFrame.name
+      sliders.zip(keyFrame.pos.seq).zip(model.motors).foreach { case ((sl, v), vr) =>
         sl.value = v
         if (seqRunIdx == 0) {
           vr() = v
           Thread.sleep(500) // XXX TODO ugly
           nextSeqStep()
         } else {
-          vr.lineTo(v, duration = pst.dur /*2000*/)
+          vr.lineTo(v, duration = keyFrame.dur /*2000*/)
         }
       }
     }
 
     def nextSeqStep(): Unit = {
       seqRunIdx += 1
-      if (seqRunIdx <= config.presets.size) {
+      val pstSeq    = config.presets.getOrElse(pstName(), Nil)
+      if (seqRunIdx <= pstSeq.size) {
         stepRunSeq()
       } else {
         stopSeq()
@@ -265,7 +287,7 @@ object ServoUI {
     bRunSeq.reactions += {
       case ButtonClicked(_) =>
         stopSeq()
-        val pstSeq = config.presets
+        val pstSeq = config.presets.getOrElse(pstName(), Nil)
         if (pstSeq.nonEmpty) {
           if (pstSeq.head.pos != model.current) {
             model.name() = "Not in initial!"

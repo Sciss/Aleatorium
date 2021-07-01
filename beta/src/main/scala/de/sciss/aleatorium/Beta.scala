@@ -141,6 +141,97 @@ object Beta {
     gripOpen =  64,
   )
 
+  object Dice1 extends ArmPos(
+    base     = 176, //
+    lowArm   =  91,
+    highArm  =  82,
+    ankle    =  83,
+    gripRota = 175,
+    gripOpen =  80,
+  )
+
+  object Dice2 extends ArmPos(
+    base     = 176,
+    lowArm   = 100, //
+    highArm  =  60, //
+    ankle    =  60, //
+    gripRota = 175,
+    gripOpen =  85, //
+  )
+
+  object Dice3 extends ArmPos(
+    base     = 176,
+    lowArm   = 110, //
+    highArm  =  50, //
+    ankle    =  30, //
+    gripRota = 175,
+    gripOpen =  90, //
+  )
+
+  object Dice4 extends ArmPos(
+    base     = 176,
+    lowArm   = 122, //
+    highArm  =  25, //
+    ankle    =  23, //
+    gripRota = 175,
+    gripOpen =  90,
+  )
+
+  object Dice5 extends ArmPos(
+    base     = 176,
+    lowArm   = 122,
+    highArm  =  25,
+    ankle    =  23,
+    gripRota = 175,
+    gripOpen =  69, //
+  )
+
+  object Dice6 extends ArmPos(
+    base     = 176,
+    lowArm   = 122,
+    highArm  =  40, //
+    ankle    =  23,
+    gripRota = 175,
+    gripOpen =  69,
+  )
+
+  object Dice7 extends ArmPos(
+    base     = 176,
+    lowArm   =  97, //
+    highArm  =  74, //
+    ankle    =  23,
+    gripRota = 175,
+    gripOpen =  69,
+  )
+
+  object Dice8 extends ArmPos(
+    base     = 134, //
+    lowArm   =  97, //
+    highArm  =  74,
+    ankle    =  23,
+    gripRota = 134, //
+    gripOpen =  69,
+  )
+
+  // "hold"
+  object Dice8b extends ArmPos(
+    base     = 134,
+    lowArm   =  97,
+    highArm  =  74,
+    ankle    =  23,
+    gripRota = 133,
+    gripOpen =  69,
+  )
+
+  object DiceThrow extends ArmPos(
+    base     = 134,
+    lowArm   =  97,
+    highArm  =  74,
+    ankle    =  23,
+    gripRota = 134,
+    gripOpen =  95,
+  )
+
   val GestureNo: Seq[KeyFrame] = Seq(
     KeyFrame("Park"   , Park    ),
     KeyFrame("Awake"  , Awake   ),
@@ -153,6 +244,8 @@ object Beta {
     KeyFrame("Return2"  , Return2   ),
     KeyFrame("Return3"  , Return3   ),
   )
+
+  val NameNo = "No"
 
   val GestureYes: Seq[KeyFrame] = Seq(
     KeyFrame("Park"   , Park    ),
@@ -167,6 +260,34 @@ object Beta {
     KeyFrame("Return2"  , Return2   ),
     KeyFrame("Return3"  , Return3   ),
   )
+
+  val NameYes = "Yes"
+
+  val GestureDice: Seq[KeyFrame] = Seq(
+    KeyFrame("Park"   , Park    ),
+    KeyFrame("Awake"  , Awake   ),
+    KeyFrame("Dice1" , Dice1, dur = 1000  ),
+    KeyFrame("Dice2" , Dice2, dur = 1000  ),
+    KeyFrame("Dice3" , Dice3, dur = 1000  ),
+    KeyFrame("Dice4" , Dice4, dur = 1000  ),
+    KeyFrame("Dice5" , Dice5  ),
+    KeyFrame("Dice6" , Dice6, dur = 1500  ),
+    KeyFrame("Dice7" , Dice7, dur = 1500  ),
+    KeyFrame("Dice8" , Dice8, dur = 1000  ),
+    KeyFrame("Dice8b", Dice8b, dur = 1000  ),
+    KeyFrame("DiceThrow", DiceThrow, dur = 500  ),
+    KeyFrame("Return3"  , Return3   ),
+  )
+
+  val NameDice = "Dice"
+
+  val Presets: Map[String, Seq[KeyFrame]] = Map(
+    NameNo    -> GestureNo,
+    NameYes   -> GestureYes,
+    NameDice  -> GestureDice,
+  )
+
+  val PresetNames = Seq(NameNo, NameYes, NameDice)
 
   //  object Park extends ArmPos(
   //    base     =  90,
@@ -238,11 +359,12 @@ object Beta {
     println(Beta.nameAndVersion)
     val uiCfg = ServoUI.Config(
       /*dryRun = true*/
-      presets     = GestureNo, // GestureYes,
+      presets     = Presets,
       offAfterSeq = false,    // too fragile in that position
     )
-    val runSeq = Var(false)
-    ServoUI.run(uiCfg, ArmModel(Park), runSeq)
+    val runSeq  = Var(false)
+    val pstName = Var(NameNo)
+    ServoUI.run(uiCfg, ArmModel(Park), pstName, runSeq)
 //    butState.addListener {
 //      case false =>
 //        if (!runSeq()) {
@@ -259,8 +381,10 @@ object Beta {
       Some(t)
     } else None
 
-    def setRunSeq(): Unit =
-      runSeq() = true
+    def setRunSeq(gesture: Int): Unit = {
+      pstName() = PresetNames(gesture)
+      runSeq()  = true
+    }
 
     if (c.oscPort > 0) {
       val rCfg = osc.UDP.Config()
@@ -269,8 +393,7 @@ object Beta {
       val rcv = osc.UDP.Receiver(rCfg)
       rcv.action = {
         case (osc.Message("/arm", gesture: Int), _) =>
-          println(s"TO-DO: gesture = $gesture")
-          setRunSeq()
+          setRunSeq(gesture)
         case (x, from) =>
           println(s"Unsupported OSC packet $x from $from")
       }
@@ -291,7 +414,7 @@ object Beta {
                 Console.err.println("While sending light OSC:")
                 ex.printStackTrace()
             }
-            setRunSeq()
+            setRunSeq(0)
           }
         },
       )

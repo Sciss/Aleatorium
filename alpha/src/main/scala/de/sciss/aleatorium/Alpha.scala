@@ -213,6 +213,12 @@ object Alpha {
     KeyFrame("Return4", Return4 ),
   )
 
+  val NameGesture = "Default"
+
+  val Presets: Map[String, Seq[KeyFrame]] = Map(
+    NameGesture -> Gesture
+  )
+
 //  object Park extends ArmPos(
 //    base     =  90,
 //    lowArm   = 118, //
@@ -276,12 +282,13 @@ object Alpha {
     println(Alpha.nameAndVersion)
     val sCfg = ServoUI.Config(
       /*dryRun = true*/
-      presets     = Gesture,
+      presets     = Presets,
       offAfterSeq = true,
     )
     val runSeq    = Var(false)
     val butState  = Var(true)
-    ServoUI.run(sCfg, ArmModel(Park), runSeq)
+    val pstName   = Var(NameGesture)
+    ServoUI.run(sCfg, ArmModel(Park), pstName, runSeq)
     val fCfg = FootSwitch.Config()
     FootSwitch.run(fCfg, butState)
     butState.addListener {
