@@ -26,7 +26,7 @@ object Light {
 
   case class Config(
                      gpio       : Int       = 18,
-                     stripType  : LedStripType = LedStripType.WS2811_STRIP_GRB,
+                     stripType  : LedStripType = LedStripType.WS2811_STRIP_RGB,
                      invert     : Boolean   = false,
                      brightness : Int       = 0xFF,
                      verbose    : Boolean   = false,

@@ -139,27 +139,37 @@ object Alpha {
   )
 
   object Swerve2 extends ArmPos(
-    base     = 165, // 170, //
-    lowArm   = 108, // 112,
-    highArm  =  80, //
+    base     = 162, // 170, //
+    lowArm   = 114, // 109, // 112,
+    highArm  =  89, // 80, //
     ankle    =  30,
     gripRota = 135, //
     gripOpen =  74,
   )
 
-  object Drop extends ArmPos(
-    base     = 165, // 170,
-    lowArm   = 108, // 112,
-    highArm  =  80,
+  // "pause"
+  object Swerve2b extends ArmPos(
+    base     = 162,
+    lowArm   = 114, // 109, //
+    highArm  =  89, // 82,
     ankle    =  30,
-    gripRota = 135,
+    gripRota = 170, // 135,
+    gripOpen =  74,
+  )
+
+  object Drop extends ArmPos(
+    base     = 162, // 170,
+    lowArm   = 114, // 109, // 112,
+    highArm  =  89, // 82,
+    ankle    =  30,
+    gripRota = 170, // 135,
     gripOpen = 110,
   )
 
   object Return1 extends ArmPos(
     base     =  90, //
-    lowArm   = 112,
-    highArm  =  80,
+    lowArm   = 112, //
+    highArm  =  80, //
     ankle    =  30,
     gripRota = 170, //
     gripOpen = 110,
@@ -206,6 +216,7 @@ object Alpha {
     KeyFrame("Lift2"  , Lift2   ),
     KeyFrame("Swerve1", Swerve1 ),
     KeyFrame("Swerve2", Swerve2 ),
+    KeyFrame("Swerve2b", Swerve2b, dur = 1000),
     KeyFrame("Drop"   , Drop    ),
     KeyFrame("Return1", Return1 ),
     KeyFrame("Return2", Return2 ),
