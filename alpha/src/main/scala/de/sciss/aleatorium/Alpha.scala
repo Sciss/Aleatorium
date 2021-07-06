@@ -139,8 +139,8 @@ object Alpha {
   )
 
   object Swerve2 extends ArmPos(
-    base     = 170, //
-    lowArm   = 112,
+    base     = 165, // 170, //
+    lowArm   = 108, // 112,
     highArm  =  80, //
     ankle    =  30,
     gripRota = 135, //
@@ -148,8 +148,8 @@ object Alpha {
   )
 
   object Drop extends ArmPos(
-    base     = 170,
-    lowArm   = 112,
+    base     = 165, // 170,
+    lowArm   = 108, // 112,
     highArm  =  80,
     ankle    =  30,
     gripRota = 135,
