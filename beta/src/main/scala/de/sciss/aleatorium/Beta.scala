@@ -330,7 +330,7 @@ object Beta {
       val initDelay: Opt[Int] = opt("init-delay", default = Some(default.initDelay),
         descr = s"Initial delay in seconds (to make sure date-time is synced) (default: ${default.initDelay})."
       )
-      val noShutdown: Opt[Boolean] = opt("no-shutdown", descr = "Do not shutdown Pi after compleition.", default = Some(false))
+      val noShutdown: Opt[Boolean] = opt("no-shutdown", descr = "Do not shutdown Pi after completion.", default = Some(false))
 
       val noSound: Opt[Boolean] = opt("no-sound", descr = "Do not play sound.", default = Some(false))
       val noLight: Opt[Boolean] = opt("no-light", descr = "Do not flash light.", default = Some(false))

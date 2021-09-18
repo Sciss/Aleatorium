@@ -99,3 +99,19 @@ The JNI library is build via https://github.com/Sciss/rpi-ws281x-java/tree/pi4
 TODO: `Can't open /dev/mem: Permission denied`. Currently must use `sudo` for:
 
     java -cp aleatorium.jar:lib/rpi-ws281x-java-2.0.0-SNAPSHOT.jar de.sciss.aleatorium.Light
+
+## IPs
+
+- alpha (top): 192.168.0.30
+- beta (bottom): 192.168.0.46
+
+## Cabling and setup
+
+Alpha foot switch: 3pin extension cable is connected white-on-white. On the GPIO, connect header pins
+14 to 16 (outer row, skipping six pins), so that 0v, GPIO4 and GPIO5 are connected. The white wire goes
+to GPIO5 (header pin 16).
+
+Placement: The base plate is positioned c. 15 cm away from the wall. The right hand side extends around 7.5 cm
+beyond the right hand side of the shelf. The dispenser is positioned based on visual markers on the base plate,
+yielding an approx. distance from the wall of 22.3 cm. and its right hand side aligning with the right arm
+of the shelf mount
