@@ -355,8 +355,17 @@ object Beta {
     run(p.config)
   }
 
+  @volatile
+  private var shouldShutDown = false
+
   def run(c: Config): Unit = {
     println(Beta.nameAndVersion)
+
+    def quitOrShutdown(): Unit = {
+      println("Going to shut down")
+      if (c.shutdown) shutdown() else sys.exit()
+    }
+
     val uiCfg = ServoUI.Config(
       /*dryRun = true*/
       presets     = Presets,
@@ -365,13 +374,10 @@ object Beta {
     val runSeq  = Var(false)
     val pstName = Var(NameNo)
     ServoUI.run(uiCfg, ArmModel(Park), pstName, runSeq)
-//    butState.addListener {
-//      case false =>
-//        if (!runSeq()) {
-//          println("Launch sequence")
-//          runSeq() = true
-//        }
-//    }
+    runSeq.addListener {
+      case false =>
+        if (shouldShutDown) quitOrShutdown()
+    }
 
     val lightOpt = if (c.light) {
       val tCfg = osc.UDP.Config()
@@ -393,7 +399,12 @@ object Beta {
       val rcv = osc.UDP.Receiver(rCfg)
       rcv.action = {
         case (osc.Message("/arm", gesture: Int), _) =>
-          setRunSeq(gesture)
+          if (!shouldShutDown) setRunSeq(gesture)
+        case (osc.Message("/shutdown"), _) =>
+          if (!shouldShutDown) {
+            shouldShutDown = true
+            if (!runSeq()) quitOrShutdown()
+          }
         case (x, from) =>
           println(s"Unsupported OSC packet $x from $from")
       }
