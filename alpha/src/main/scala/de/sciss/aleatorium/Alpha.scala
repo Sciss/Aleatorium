@@ -289,8 +289,17 @@ object Alpha {
     run(p.config)
   }
 
+  @volatile
+  private var shouldShutDown = false
+
   def run(c: Config): Unit = {
     println(Alpha.nameAndVersion)
+
+    def quitOrShutdown(): Unit = {
+      println("Going to shut down")
+      if (c.shutdown) shutdown() else sys.exit()
+    }
+
     val sCfg = ServoUI.Config(
       /*dryRun = true*/
       presets     = Presets,
@@ -300,14 +309,27 @@ object Alpha {
     val butState  = Var(true)
     val pstName   = Var(NameGesture)
     ServoUI.run(sCfg, ArmModel(Park), pstName, runSeq)
+    runSeq.addListener {
+      case false =>
+        if (shouldShutDown) quitOrShutdown()
+    }
+
     val fCfg = FootSwitch.Config()
     FootSwitch.run(fCfg, butState)
     butState.addListener {
       case false =>
-        if (!runSeq()) {
+        if (!runSeq() && !shouldShutDown) {
           println("Launch sequence")
           runSeq() = true
         }
+    }
+
+    val oCfg = OffSwitch.Config()
+    OffSwitch.run(oCfg) { () =>
+      if (!shouldShutDown) {
+        shouldShutDown = true
+        if (!runSeq()) quitOrShutdown()
+      }
     }
   }
 

@@ -107,11 +107,12 @@ TODO: `Can't open /dev/mem: Permission denied`. Currently must use `sudo` for:
 
 ## Cabling and setup
 
-Alpha. Foot switch: 3pin extension cable is connected white-on-white. On the GPIO, connect header pins
+__Alpha.__ *Foot switch:* 3pin extension cable is connected white-on-white. On the GPIO, connect header pins
 14 to 16 (outer row, skipping six pins), so that 0v, GPIO4 and GPIO5 are connected. The white wire goes
 to GPIO5 (header pin 16).
+*On-off switch:* 2pin button on header pins 20, 22, i.e. 0v and GPIO6.
 
-Beta. On-off switch: 2pin button on header pins 18, 20, i.e. GPIO5 and 0v.
+__Beta.__ *On-off switch:* 2pin button on header pins 18, 20, i.e. GPIO5 and 0v.
 
 Placement: The base plate is positioned c. 15 cm away from the wall. The right hand side extends around 7.5 cm
 beyond the right hand side of the shelf. The dispenser is positioned based on visual markers on the base plate,
