@@ -25,6 +25,8 @@ import scala.util.Try
 object EisKMarkers {
   def main(args: Array[String]): Unit = run()
 
+  case class Marker(pos: Int, name: String)
+
   def run(): Unit = {
     val client = osc.TCP.Client("127.0.01" -> 17737)
     client.connect()
@@ -71,12 +73,12 @@ object EisKMarkers {
     println(s"Number of markers: $num -- should be $exp")
 
     @tailrec
-    def getRange(start: Int = 0, res: Vector[Int] = Vector.empty): Vector[Int] =
+    def getRange(start: Int = 0, res: Vector[Marker] = Vector.empty): Vector[Marker] =
       if (start == num) res else {
         val stop = math.min(num, start + 100)
         val futRange = get(addrMarkers)("range", start, stop) { xs =>
           xs.grouped(2).map {
-            case Seq(pos: Int, _: String) => pos
+            case Seq(pos: Int, name: String) => Marker(pos, name)
           } .toVector
         }
         val marks = Await.result(futRange, Duration.Inf)
@@ -85,9 +87,39 @@ object EisKMarkers {
 
     val marks = getRange()
 
-    println(s"Markers received: ${marks.size}")
+    val words = {
+      val in = io.Source.fromFile("notes/Wordlist.txt", "UTF-8")
+      try {
+        in.getLines().map(_.trim).filterNot(_.isBlank).toVector
+      } finally {
+        in.close()
+      }
+    }
+
+    val dupOpt = marks.sliding(2, 1).collectFirst {
+      case Seq(m1, m2) if m1.pos == m2.pos => m1
+    }
+    dupOpt.foreach { dup =>
+      println(s"!!! DUPLICATE marker: $dup")
+    }
+
+    val misalignedOpt = marks.grouped(2).collectFirst {
+      case Seq(_, m2) if m2.name != "Mark" => m2
+    }
+    misalignedOpt.foreach { m =>
+      println(s"!!! MISALIGNED marker: $m")
+    }
+
+    println(s"Markers received: ${marks.size}; words ${words.size}")
+    val wrongOpt = (words zip marks.sliding(1, 2).flatten.toVector).collectFirst {
+      case (correct, m @ Marker(_, found)) if found != correct && found != "Mark" => (correct, m)
+    }
+    wrongOpt.foreach { case (correct, m) =>
+      println(s"!!! MISTAKE. Word should be $correct, but found $m")
+    }
 
     println()
-    println(marks.grouped(10).map(_.mkString(", ")).mkString(",\n"))
+    println(marks.map(_.pos).grouped(10).map(_.mkString(", ")).mkString(",\n"))
+    sys.exit()
   }
 }
