@@ -1,6 +1,6 @@
 lazy val baseName       = "Aleatorium"
 lazy val baseNameL      = baseName.toLowerCase
-lazy val projectVersion = "0.5.0-SNAPSHOT"
+lazy val projectVersion = "0.5.0"
 
 lazy val buildInfoSettings = Seq(
   // ---- build info ----

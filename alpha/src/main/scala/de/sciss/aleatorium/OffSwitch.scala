@@ -17,6 +17,8 @@ import com.pi4j.io.gpio.event.{GpioPinDigitalStateChangeEvent, GpioPinListenerDi
 import com.pi4j.io.gpio.{GpioFactory, Pin, PinPullResistance, RaspiPin}
 import org.rogach.scallop.{ScallopConf, ScallopOption => Opt}
 
+import java.util.{Timer, TimerTask}
+
 /*
   wire 1 : GND
   wire 2 : GPIO 6
@@ -86,20 +88,30 @@ object OffSwitch {
 
     if (config.log) println(s"Initial state: ${button.getState} ; resistance ${button.getPullResistance}")
 
-    var timePressed = Long.MaxValue
-    val durMillis   = (config.duration * 1000).toLong
+//    var timePressed = Long.MaxValue
 
     button.addListener(new GpioPinListenerDigital() {
+      private var scheduled   = Option.empty[TimerTask]
+      private val timer       = new Timer
+      private val durMillis   = (config.duration * 1000).toLong
+
       override def handleGpioPinDigitalStateChangeEvent(event: GpioPinDigitalStateChangeEvent): Unit = {
         if (config.log) println(s"button: ${event.getState}")
         val pressed = event.getState.isLow
-        val t       = System.currentTimeMillis()
+//        val t       = System.currentTimeMillis()
+        scheduled.foreach(_.cancel())
+        scheduled = None
         if (pressed) {
-          timePressed = t
-        } else {
-          if ((t - durMillis) > timePressed) {
-            trig()
+          val tt = new TimerTask {
+            override def run(): Unit = trig()
           }
+          timer.schedule(tt, durMillis)
+//          timePressed = t
+          scheduled = Some(tt)
+//        } else {
+//          if ((t - durMillis) > timePressed) {
+//            trig()
+//          }
         }
       }
     })
