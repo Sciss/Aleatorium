@@ -32,6 +32,7 @@ object Beta {
                      light      : Boolean   = true,
                      sound      : Boolean   = true,
                      oscPort    : Int       = DefaultPort,
+                     armOff     : Boolean   = true,
                    )
 
   object Park extends ArmPos(
@@ -232,6 +233,16 @@ object Beta {
     gripOpen =  95,
   )
 
+  // do this in three seconds
+  object Off extends ArmPos(
+    base     = 145,
+    lowArm   = 120, //
+    highArm  =  18, //
+    ankle    =  30, //
+    gripRota = 176,
+    gripOpen =  81,
+  )
+
   val GestureNo: Seq[KeyFrame] = Seq(
     KeyFrame("Park"   , Park    ),
     KeyFrame("Awake"  , Awake   ),
@@ -281,22 +292,31 @@ object Beta {
 
   val NameDice = "Dice"
 
+  val GestureOff: Seq[KeyFrame] = Seq(
+    KeyFrame("Park"   , Park    ),
+    KeyFrame("Awake"  , Awake   ),
+    KeyFrame("Off"    , Off, dur = 3000  ),
+  )
+
+  val NameOff = "Off." // period!
+
+  val GestureOn: Seq[KeyFrame] = Seq(
+    KeyFrame("Off"    , Off),
+    KeyFrame("Awake"  , Awake, dur = 3000),
+    KeyFrame("Park"   , Park    ),
+  )
+
+  val NameOn = "On." // period!
+
   val Presets: Map[String, Seq[KeyFrame]] = Map(
     NameNo    -> GestureNo,
     NameYes   -> GestureYes,
     NameDice  -> GestureDice,
+    NameOff   -> GestureOff,
+    NameOn    -> GestureOn,
   )
 
   val PresetNames = Seq(NameNo, NameYes, NameDice)
-
-  //  object Park extends ArmPos(
-  //    base     =  90,
-  //    lowArm   = 118, //
-  //    highArm  =  10,
-  //    ankle    =  34,
-  //    gripRota = 170,
-  //    gripOpen =  74,
-  //  )
 
   private def buildInfString(key: String): String = try {
     val clazz = Class.forName("de.sciss.aleatorium.BuildInfo")
@@ -334,6 +354,9 @@ object Beta {
 
       val noSound: Opt[Boolean] = opt("no-sound", descr = "Do not play sound.", default = Some(false))
       val noLight: Opt[Boolean] = opt("no-light", descr = "Do not flash light.", default = Some(false))
+      val noArmOff: Opt[Boolean] = opt("no-arm-off", descr = "Do not put arm in resting position on shutdown.",
+        default = Some(!default.armOff)
+      )
 
       val oscPort: Opt[Int] = opt(
         name    = "port",
@@ -350,6 +373,7 @@ object Beta {
         sound     = !noSound(),
         light     = !noLight(),
         oscPort   = oscPort(),
+        armOff    = !noArmOff(),
       )
     }
     run(p.config)
@@ -357,6 +381,9 @@ object Beta {
 
   @volatile
   private var shouldShutDown = false
+
+  @volatile
+  private var pendingOnOff   = false
 
   def run(c: Config): Unit = {
     println(Beta.nameAndVersion)
@@ -373,11 +400,33 @@ object Beta {
     )
     val runSeq  = Var(false)
     val pstName = Var(NameNo)
-    ServoUI.run(uiCfg, ArmModel(Park), pstName, runSeq)
+
+    val pos0 = if (c.armOff) Off else Park
+    ServoUI.run(uiCfg, ArmModel(pos0), pstName, runSeq)
+
+    def setRunSeq(gesture: Int): Unit = {
+      pstName() = PresetNames(gesture)
+      runSeq()  = true
+    }
+
+    def setNamedRunSeq(n: String): Unit = {
+      pstName() = n
+      runSeq()  = true
+    }
+
     runSeq.addListener {
       case false =>
-        if (shouldShutDown) quitOrShutdown()
+        if (shouldShutDown) {
+          if (c.armOff && pendingOnOff) {
+            pendingOnOff = false
+            setNamedRunSeq(NameOff)
+          } else {
+            quitOrShutdown()
+          }
+        }
     }
+
+    if (c.armOff) setNamedRunSeq(NameOn)
 
     val lightOpt = if (c.light) {
       val tCfg = osc.UDP.Config()
@@ -386,11 +435,6 @@ object Beta {
       t.connect()
       Some(t)
     } else None
-
-    def setRunSeq(gesture: Int): Unit = {
-      pstName() = PresetNames(gesture)
-      runSeq()  = true
-    }
 
     if (c.oscPort > 0) {
       val rCfg = osc.UDP.Config()
@@ -402,8 +446,16 @@ object Beta {
           if (!shouldShutDown) setRunSeq(gesture)
         case (osc.Message("/shutdown"), _) =>
           if (!shouldShutDown) {
-            shouldShutDown = true
-            if (!runSeq()) quitOrShutdown()
+            pendingOnOff    = true
+            shouldShutDown  = true
+            if (!runSeq()) {
+              if (c.armOff) {
+                pendingOnOff = false
+                setNamedRunSeq(NameOff)
+              } else {
+                quitOrShutdown()
+              }
+            }
           }
         case (x, from) =>
           println(s"Unsupported OSC packet $x from $from")

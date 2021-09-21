@@ -75,6 +75,7 @@ object ServoUI {
     }
   }
 
+  // N.B. if a preset name ends with period (.), the sequence does not return to step 0.
   def run(config: Config, model: ArmModel, pstName: Var[String], runSeq: Var[Boolean]): Unit = {
     val gpioProvider = createProvider(i2cBus = config.i2cBus, freq = config.freq)
     val gpio = GpioFactory.getInstance
@@ -260,8 +261,10 @@ object ServoUI {
 
     def nextSeqStep(): Unit = {
       seqRunIdx += 1
-      val pstSeq    = config.presets.getOrElse(pstName(), Nil)
-      if (seqRunIdx <= pstSeq.size) {
+      val n         = pstName()
+      val pstSeq    = config.presets.getOrElse(n, Nil)
+      val cond      = if (n.endsWith(".")) seqRunIdx < pstSeq.size else seqRunIdx <= pstSeq.size
+      if (cond) {
         stepRunSeq()
       } else {
         stopSeq()
